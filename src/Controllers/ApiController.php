@@ -122,6 +122,47 @@ class ApiController
                         ],
                         'example' => "/{$apiPrefix}/steam/popular?app_id=730"
                     ]
+                ],
+                'profile' => [
+                    "GET /{$apiPrefix}/steam/profile/{identifier}" => [
+                        'description' => 'Get Steam profile information',
+                        'parameters' => [
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/profile/76561198000000000"
+                    ],
+                    "GET /{$apiPrefix}/steam/profile/{identifier}/inventory" => [
+                        'description' => 'Get Steam profile inventory',
+                        'parameters' => [
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)',
+                            'app_id' => 'Steam App ID (optional, default: 730)',
+                            'context_id' => 'Context ID (optional, default: 2)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/profile/76561198000000000/inventory?app_id=730"
+                    ],
+                    "GET /{$apiPrefix}/steam/profile/{identifier}/friends" => [
+                        'description' => 'Get Steam profile friend list (requires API key)',
+                        'parameters' => [
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/profile/76561198000000000/friends"
+                    ],
+                    "GET /{$apiPrefix}/steam/profile/{identifier}/games/recent" => [
+                        'description' => 'Get recently played games (requires API key)',
+                        'parameters' => [
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)',
+                            'count' => 'Number of games to return (optional, default: 10, max: 50)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/profile/76561198000000000/games/recent?count=5"
+                    ],
+                    "GET /{$apiPrefix}/steam/profile/search" => [
+                        'description' => 'Search Steam profiles by name (not implemented)',
+                        'parameters' => [
+                            'q' => 'Search query (required, min 3 characters)',
+                            'limit' => 'Number of results (optional, default: 10, max: 25)'
+                        ],
+                        'note' => 'Currently returns 501 - Steam does not provide public profile search API'
+                    ]
                 ]
             ],
             'common_app_ids' => [
@@ -140,9 +181,23 @@ class ApiController
             'features' => [
                 'Item prices with full Steam CDN image URLs',
                 'Steam app search by name',
-                'Dynamic app detection',
+                'Dynamic app detection', 
+                'Steam profile information and data',
+                'Inventory browsing with item details',
+                'Friend list access (with API key)',
+                'Recently played games (with API key)',
                 'Market support verification',
                 'Robust error handling'
+            ],
+            'authentication' => [
+                'note' => 'Some features require a Steam Web API key',
+                'api_key_url' => 'https://steamcommunity.com/dev/apikey',
+                'required_for' => [
+                    'Friend lists',
+                    'Recently played games', 
+                    'Enhanced profile data',
+                    'Vanity URL resolution (fallback available)'
+                ]
             ],
             'success' => true,
             'timestamp' => date('Y-m-d H:i:s')
