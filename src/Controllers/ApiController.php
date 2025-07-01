@@ -7,11 +7,29 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Helpers\ConfigHelper;
 
+/**
+ * API Controller
+ * 
+ * Handles general API endpoints including test endpoints and documentation.
+ * Provides basic API functionality and generates dynamic API documentation.
+ *
+ * @package App\Controllers
+ * @author Steam REST API
+ * @version 1.0.0
+ */
 class ApiController
 {
     /**
-     * GET /api/v1/test
      * Basic API test endpoint
+     * 
+     * Provides a simple health check and basic API information.
+     * Returns API status, version information, and available endpoints.
+     *
+     * @param Request $request The HTTP request object
+     * @param Response $response The HTTP response object
+     * @return Response JSON response with API status and information
+     * 
+     * @route GET /api/v1/test
      */
     public function test(Request $request, Response $response): Response
     {
@@ -31,8 +49,17 @@ class ApiController
     }
     
     /**
-     * GET /api/v1/docs
-     * API Documentation
+     * API Documentation endpoint
+     * 
+     * Generates comprehensive API documentation including all available endpoints,
+     * parameters, examples, and supported Steam applications. Dynamically builds
+     * documentation based on current configuration and available routes.
+     *
+     * @param Request $request The HTTP request object
+     * @param Response $response The HTTP response object
+     * @return Response JSON response with complete API documentation
+     * 
+     * @route GET /api/v1/docs
      */
     public function getDocs(Request $request, Response $response): Response
     {

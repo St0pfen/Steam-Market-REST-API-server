@@ -3,10 +3,27 @@ declare(strict_types=1);
 
 namespace App\Helpers;
 
+/**
+ * Configuration Helper Class
+ * 
+ * Provides centralized access to application configuration settings,
+ * environment variables, and configuration management.
+ *
+ * @package App\Helpers
+ * @author Steam REST API
+ * @version 1.0.0
+ */
 class ConfigHelper
 {
     /**
-     * Get environment variable with fallback
+     * Get environment variable with fallback value
+     * 
+     * Retrieves environment variables with proper type conversion for boolean values.
+     * Falls back to default value if the environment variable is not set.
+     *
+     * @param string $key The environment variable key to retrieve
+     * @param mixed $default Default value to return if the environment variable is not set
+     * @return mixed The environment variable value or default value
      */
     public static function env(string $key, $default = null)
     {
@@ -23,7 +40,13 @@ class ConfigHelper
     }
     
     /**
-     * Get application configuration
+     * Get application configuration settings
+     * 
+     * Retrieves application-specific configuration values including
+     * application name, version, debug mode, URLs, and content types.
+     *
+     * @param string|null $key Specific configuration key to retrieve, or null for all settings
+     * @return mixed Single configuration value if key specified, or array of all settings
      */
     public static function app(string $key = null)
     {
@@ -40,7 +63,13 @@ class ConfigHelper
     }
     
     /**
-     * Get CORS configuration
+     * Get CORS (Cross-Origin Resource Sharing) configuration
+     * 
+     * Retrieves CORS settings for handling cross-origin requests
+     * including allowed origins, headers, and HTTP methods.
+     *
+     * @param string|null $key Specific CORS configuration key to retrieve, or null for all settings
+     * @return mixed Single CORS configuration value if key specified, or array of all CORS settings
      */
     public static function cors(string $key = null)
     {
@@ -54,7 +83,13 @@ class ConfigHelper
     }
     
     /**
-     * Get Steam API configuration
+     * Get Steam API configuration settings
+     * 
+     * Retrieves Steam API specific configuration including the API key
+     * required for accessing Steam Web API services.
+     *
+     * @param string|null $key Specific Steam configuration key to retrieve, or null for all settings
+     * @return mixed Single Steam configuration value if key specified, or array of all Steam settings
      */
     public static function steam(string $key = null)
     {
