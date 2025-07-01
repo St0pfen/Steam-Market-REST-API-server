@@ -1,0 +1,85 @@
+# Environment files
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Composer
+/vendor
+composer.phar
+composer.lock
+
+# Logs
+/logs/
+*.log
+error_log
+
+# Logs directory structure (keep directory but ignore log files)
+logs/*.log
+logs/*.log.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# Cache & Temporary files
+/cache/
+/tmp/
+.cache
+*.tmp
+*.temp
+
+# PHPUnit
+.phpunit.result.cache
+/phpunit.xml
+/coverage/
+
+# Development tools
+.php_cs.cache
+.php-cs-fixer.cache
+psalm.xml
+steam-rest-api.code-workspace
+
+# Backup files
+*.bak
+*.backup
+*.old
+
+# Steam API specific
+steam_api_keys.txt
+steam_credentials.json
+
+# Additional PHP/Web specific
+*.php~
+*.orig
+*.rej
+.buildpath
+.project
+.settings/
+.externalToolBuilders/
+.metadata/
+
+# Security & Config
+config/local.php
+config/production.php
+config/staging.php
+*.key
+*.pem
+*.crt
+
+# Runtime & Output
+/storage/
+/bootstrap/cache/
+.phpunit.cache/
