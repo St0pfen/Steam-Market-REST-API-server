@@ -6,11 +6,39 @@ namespace App\Services;
 use SteamApi\SteamApi;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Steam Market Service
+ * 
+ * Provides access to Steam Market API functionality including item pricing,
+ * search capabilities, app information, and market data retrieval.
+ * Handles API authentication and error management.
+ *
+ * @package App\Services
+ * @author Steam REST API
+ * @version 1.0.0
+ */
 class SteamMarketService
 {
+    /**
+     * Steam API client instance
+     * @var SteamApi
+     */
     private SteamApi $steamApi;
+    
+    /**
+     * Optional logger instance for API call logging
+     * @var LoggerInterface|null
+     */
     private ?LoggerInterface $logger;
     
+    /**
+     * SteamMarketService constructor
+     * 
+     * Initializes the Steam API client with optional API key
+     * and sets up logging if provided.
+     *
+     * @param LoggerInterface|null $logger Optional logger for API call tracking
+     */
     public function __construct(?LoggerInterface $logger = null)
     {
         $apiKey = $_ENV['STEAM_API_KEY'] ?? null;
@@ -26,7 +54,15 @@ class SteamMarketService
     }
     
     /**
-     * Get the price of a Steam Market item
+     * Get Steam Market item pricing information
+     * 
+     * Retrieves detailed pricing data for a specific Steam Market item
+     * including lowest price, median price, volume, and image URL.
+     *
+     * @param string $itemName The market hash name of the item
+     * @param int $appId Steam application ID (default: 730 for CS:GO)
+     * @return array Item pricing data with success status and timestamp
+     * @throws \Exception When API call fails or returns invalid data
      */
     public function getItemPrice(string $itemName, int $appId = 730): array
     {
@@ -85,6 +121,15 @@ class SteamMarketService
     
     /**
      * Search for Steam Market items
+     * 
+     * Performs a search query against the Steam Market API to find
+     * items matching the search criteria with pagination support.
+     *
+     * @param string $query Search query string
+     * @param int $appId Steam application ID to search within (default: 730)
+     * @param int $count Maximum number of results to return (default: 10, max: 100)
+     * @return array Search results with items array and metadata
+     * @throws \Exception When API call fails or returns invalid data
      */
     public function searchItems(string $query, int $appId = 730, int $count = 10): array
     {
@@ -144,7 +189,14 @@ class SteamMarketService
     }
     
     /**
-     * Get popular Steam Market items
+     * Get popular Steam Market items for an application
+     * 
+     * Retrieves trending and popular items from the Steam Market
+     * for the specified application ID.
+     *
+     * @param int $appId Steam application ID (default: 730 for CS:GO)
+     * @return array Popular items array with metadata and success status
+     * @throws \Exception When API call fails or returns invalid data
      */
     public function getPopularItems(int $appId = 730): array
     {
@@ -201,7 +253,14 @@ class SteamMarketService
     }
     
     /**
-     * Search Steam App ID by app name
+     * Find Steam application by name
+     * 
+     * Searches for Steam applications matching the provided name
+     * and returns relevant app IDs and information.
+     *
+     * @param string $appName Name of the Steam application to search for
+     * @return array Search results with matching applications and metadata
+     * @throws \Exception When API call fails or returns invalid data
      */
     public function findAppByName(string $appName): array
     {
@@ -249,7 +308,14 @@ class SteamMarketService
     }
     
     /**
-     * Get app details by app ID
+     * Get detailed Steam application information
+     * 
+     * Retrieves comprehensive information about a Steam application
+     * including name, description, market support, and metadata.
+     *
+     * @param int $appId Steam application ID
+     * @return array Detailed application information with success status
+     * @throws \Exception When API call fails or returns invalid data
      */
     public function getAppDetails(int $appId): array
     {
@@ -301,7 +367,13 @@ class SteamMarketService
     }
     
     /**
-     * Check if an app has Steam Market support
+     * Check if a Steam application has Market support
+     * 
+     * Tests whether the specified application supports Steam Market
+     * transactions by attempting a test API call.
+     *
+     * @param int $appId Steam application ID to check
+     * @return bool True if the app supports Steam Market, false otherwise
      */
     private function checkMarketSupport(int $appId): bool
     {
@@ -328,7 +400,12 @@ class SteamMarketService
     }
 
     /**
-     * Returns available Steam apps
+     * Get list of supported Steam applications
+     * 
+     * Returns a curated list of Steam applications that support
+     * the Market API with their names and descriptions.
+     *
+     * @return array Array of supported applications with app IDs as keys
      */
     public function getSupportedApps(): array
     {
@@ -376,7 +453,13 @@ class SteamMarketService
     }
     
     /**
-     * Creates a Steam Community image URL from an icon URL fragment
+     * Build full Steam Community image URL from icon fragment
+     * 
+     * Constructs a complete image URL using Steam Community CDN
+     * from a partial icon URL path.
+     *
+     * @param string|null $iconUrl Partial icon URL or null
+     * @return string|null Complete Steam Community image URL or null
      */
     private function buildImageUrl(?string $iconUrl): ?string
     {
@@ -396,7 +479,14 @@ class SteamMarketService
     }
     
     /**
-     * Alternative method to get item image via Market Hash Name
+     * Get item image URL from Steam Market using market hash name
+     * 
+     * Alternative method to retrieve item images by searching
+     * the Steam Market for the specific item name.
+     *
+     * @param string $marketHashName The market hash name of the item
+     * @param int $appId Steam application ID
+     * @return string|null Item image URL or null if not found
      */
     private function getItemImageFromMarket(string $marketHashName, int $appId): ?string
     {
@@ -428,7 +518,13 @@ class SteamMarketService
     }
 
     /**
-     * Extract image URLs from item data
+     * Extract image URL from item data array
+     * 
+     * Searches through various possible fields in item data
+     * to find and extract the item's image URL.
+     *
+     * @param array $item Item data array from Steam API
+     * @return string|null Item image URL or null if not found
      */
     private function extractImageFromItem(array $item): ?string
     {
@@ -451,7 +547,14 @@ class SteamMarketService
     }
     
     /**
-     * Helper method to retrieve nested array values
+     * Retrieve nested array value using dot notation
+     * 
+     * Helper method to safely extract values from nested arrays
+     * using a dot-separated path string.
+     *
+     * @param array $array Array to search in
+     * @param string $path Dot-separated path to the desired value
+     * @return mixed Found value or null if path doesn't exist
      */
     private function getNestedValue(array $array, string $path): mixed
     {
@@ -468,6 +571,16 @@ class SteamMarketService
         return $current;
     }
     
+    /**
+     * Log message using configured logger
+     * 
+     * Safely logs messages through the configured logger instance
+     * if one is available.
+     *
+     * @param string $level Log level (info, warning, error, etc.)
+     * @param string $message Message to log
+     * @return void
+     */
     private function log(string $level, string $message): void
     {
         if ($this->logger) {

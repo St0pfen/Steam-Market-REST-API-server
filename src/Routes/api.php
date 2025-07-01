@@ -1,25 +1,37 @@
 <?php
+/**
+ * API Routes Configuration
+ * 
+ * Defines all API routes for the Steam Market REST API including
+ * general endpoints, Steam Market endpoints, and error handling.
+ * Uses Slim Framework route groups for organization.
+ *
+ * @package Steam REST API
+ * @author Steam REST API
+ * @version 1.0.0
+ */
+
 declare(strict_types=1);
 
 use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ApiController;
 use App\Controllers\SteamController;
 
-// Basis API Routes
+// Main API Routes Group - Version 1
 $app->group('/api/v1', function (RouteCollectorProxy $group) {
     
-    // Allgemeine API Endpoints
+    // General API Endpoints
     $group->get('/test', [ApiController::class, 'test']);
     $group->get('/docs', [ApiController::class, 'getDocs']);
     
     // Steam Market API Endpoints
     $group->group('/steam', function (RouteCollectorProxy $steamGroup) {
         
-        // Status und Info Endpoints
+        // Status and Information Endpoints
         $steamGroup->get('/status', [SteamController::class, 'getStatus']);
         $steamGroup->get('/apps', [SteamController::class, 'getAppInfo']);
         
-        // Dynamische App-Suche
+        // Dynamic App Search Endpoints
         $steamGroup->get('/find-app', [SteamController::class, 'findAppByName']);
         $steamGroup->get('/app/{appId}', [SteamController::class, 'getAppDetails']);
         
@@ -30,7 +42,7 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
     });
 });
 
-// 404 Handler
+// Global 404 Error Handler
 $app->map(['GET', 'POST', 'PUT', 'DELETE', 'PATCH'], '/{routes:.+}', function ($request, $response) {
     $data = [
         'error' => 'Endpoint not found',

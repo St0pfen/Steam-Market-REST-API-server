@@ -8,12 +8,43 @@ use Monolog\Handler\StreamHandler;
 use Monolog\Handler\RotatingFileHandler;
 use Monolog\Formatter\LineFormatter;
 
+/**
+ * Logger Service
+ * 
+ * Provides centralized logging functionality for the application.
+ * Manages both general application logging and specialized IP access logging
+ * with automatic log rotation and formatting.
+ *
+ * @package App\Services
+ * @author Steam REST API
+ * @version 1.0.0
+ */
 class LoggerService
 {
+    /**
+     * Main logger instance for general application logs
+     * @var Logger
+     */
     private Logger $logger;
+    
+    /**
+     * Specialized logger instance for IP access logging
+     * @var Logger
+     */
     private Logger $ipLogger;
+    
+    /**
+     * Path to the logs directory
+     * @var string
+     */
     private string $logPath;
     
+    /**
+     * LoggerService constructor
+     * 
+     * Initializes the logging service, creates log directory if needed,
+     * and sets up both general and IP access loggers with rotation.
+     */
     public function __construct()
     {
         $this->logPath = __DIR__ . '/../../logs';
@@ -26,6 +57,14 @@ class LoggerService
         $this->initializeLoggers();
     }
     
+    /**
+     * Initialize logger instances and handlers
+     * 
+     * Sets up main application logger and IP access logger with rotating file handlers,
+     * custom formatters, and appropriate retention policies.
+     *
+     * @return void
+     */
     private function initializeLoggers(): void
     {
         // Main logger for general logs
@@ -62,7 +101,18 @@ class LoggerService
     }
     
     /**
-     * Loggt IP-Adresse und Request-Details
+     * Log IP access and request details
+     * 
+     * Records IP address, HTTP method, URI, user agent, response code,
+     * and response time for access monitoring and analytics.
+     *
+     * @param string $ip Client IP address
+     * @param string $method HTTP method (GET, POST, etc.)
+     * @param string $uri Requested URI
+     * @param string $userAgent Client user agent string
+     * @param int $responseCode HTTP response status code
+     * @param float $responseTime Response time in seconds
+     * @return void
      */
     public function logIpAccess(
         string $ip, 
@@ -86,7 +136,15 @@ class LoggerService
     }
     
     /**
-     * Loggt allgemeine Anwendungs-Events
+     * Log general application events
+     * 
+     * Records application events with specified log level, message, and context.
+     * Provides flexible logging for application monitoring and debugging.
+     *
+     * @param string $level Log level (info, warning, error, debug, etc.)
+     * @param string $message Log message
+     * @param array $context Additional context data
+     * @return void
      */
     public function log(string $level, string $message, array $context = []): void
     {
@@ -94,30 +152,61 @@ class LoggerService
     }
     
     /**
-     * Helper methods for different log levels
+     * Log info level message
+     * 
+     * @param string $message Information message to log
+     * @param array $context Additional context data
+     * @return void
      */
     public function info(string $message, array $context = []): void
     {
         $this->logger->info($message, $context);
     }
     
+    /**
+     * Log warning level message
+     * 
+     * @param string $message Warning message to log
+     * @param array $context Additional context data
+     * @return void
+     */
     public function warning(string $message, array $context = []): void
     {
         $this->logger->warning($message, $context);
     }
     
+    /**
+     * Log error level message
+     * 
+     * @param string $message Error message to log
+     * @param array $context Additional context data
+     * @return void
+     */
     public function error(string $message, array $context = []): void
     {
         $this->logger->error($message, $context);
     }
     
+    /**
+     * Log debug level message
+     * 
+     * @param string $message Debug message to log
+     * @param array $context Additional context data
+     * @return void
+     */
     public function debug(string $message, array $context = []): void
     {
         $this->logger->debug($message, $context);
     }
     
     /**
-     * Extrahiert die echte IP-Adresse (berücksichtigt Proxies)
+     * Extract the real IP address from server parameters
+     * 
+     * Checks various HTTP headers to determine the real client IP address,
+     * considering proxies, load balancers, and CDN services like Cloudflare.
+     *
+     * @param array $serverParams Server parameters from the request
+     * @return string Real client IP address or fallback to localhost
      */
     public static function getRealIpAddress(array $serverParams): string
     {
@@ -158,7 +247,13 @@ class LoggerService
     }
     
     /**
-     * Logs detailed request information for debugging
+     * Log detailed request information for debugging
+     * 
+     * Records comprehensive request details including parameters,
+     * headers, and timing information for troubleshooting.
+     *
+     * @param array $requestData Detailed request information array
+     * @return void
      */
     public function logDetailedRequest(array $requestData): void
     {
@@ -166,7 +261,14 @@ class LoggerService
     }
     
     /**
-     * Logs Steam API spezifische events
+     * Log Steam API specific events
+     * 
+     * Records events specifically related to Steam API interactions
+     * with structured data for monitoring and analysis.
+     *
+     * @param string $event Event name or description
+     * @param array $data Additional event data and context
+     * @return void
      */
     public function logSteamApiEvent(string $event, array $data = []): void
     {
