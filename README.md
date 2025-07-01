@@ -1,3 +1,11 @@
+## ⚠️ Disclaimer: 
+```diff
+-This is an unofficial third-party API and is not affiliated with or endorsed by Valve Corporation or Steam.
+-All Steam-related trademarks and data belong to their respective owners.
+```
+
+A PHP REST API for retrieving Steam Market data with comprehensive logging and CORS support.
+
 # Steam Market REST API
 
 A PHP REST API for retrieving Steam Market data using the `allyans3/steam-market-api-v2` library.
