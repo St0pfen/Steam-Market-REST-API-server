@@ -13,8 +13,8 @@ use Psr\Log\LoggerInterface;
  * search capabilities, app information, and market data retrieval.
  * Handles API authentication and error management.
  *
- * @package App\Services
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 class SteamMarketService

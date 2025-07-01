@@ -13,8 +13,8 @@ use App\Helpers\ConfigHelper;
  * Handles general API endpoints including test endpoints and documentation.
  * Provides basic API functionality and generates dynamic API documentation.
  *
- * @package App\Controllers
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 class ApiController

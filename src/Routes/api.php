@@ -6,8 +6,8 @@
  * general endpoints, Steam Market endpoints, and error handling.
  * Uses Slim Framework route groups for organization.
  *
- * @package Steam REST API
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 

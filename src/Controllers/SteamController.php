@@ -15,8 +15,8 @@ use Psr\Log\LoggerInterface;
  * search functionality, app information, and market data retrieval.
  * Integrates with Steam Market API through the SteamMarketService.
  *
- * @package App\Controllers
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 class SteamController

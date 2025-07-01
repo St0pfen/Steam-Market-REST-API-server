@@ -9,8 +9,8 @@ namespace App\Helpers;
  * Provides centralized access to application configuration settings,
  * environment variables, and configuration management.
  *
- * @package App\Helpers
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 class ConfigHelper

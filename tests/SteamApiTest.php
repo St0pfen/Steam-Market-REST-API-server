@@ -5,8 +5,8 @@
  * PHPUnit test suite for testing Steam Market REST API endpoints
  * including basic functionality, error handling, and response validation.
  *
- * @package Tests
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 

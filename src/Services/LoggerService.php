@@ -15,8 +15,8 @@ use Monolog\Formatter\LineFormatter;
  * Manages both general application logging and specialized IP access logging
  * with automatic log rotation and formatting.
  *
- * @package App\Services
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 class LoggerService

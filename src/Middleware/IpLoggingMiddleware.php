@@ -15,8 +15,8 @@ use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
  * for all incoming HTTP requests. Provides detailed analytics and monitoring
  * capabilities for API usage tracking.
  *
- * @package App\Middleware
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 class IpLoggingMiddleware

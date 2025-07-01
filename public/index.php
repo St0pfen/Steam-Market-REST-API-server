@@ -6,8 +6,8 @@
  * It initializes the Slim framework, configures middleware, sets up routing,
  * and handles the application bootstrap process.
  *
- * @package Steam REST API
- * @author Steam REST API
+ * @package stopfen/steam-rest-api-php
+ * @author @StopfMich
  * @version 1.0.0
  */
 
