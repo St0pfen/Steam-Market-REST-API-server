@@ -16,6 +16,7 @@ declare(strict_types=1);
 use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ApiController;
 use App\Controllers\SteamController;
+use App\Controllers\ProfileController;
 
 // Main API Routes Group - Version 1
 $app->group('/api/v1', function (RouteCollectorProxy $group) {
@@ -39,6 +40,18 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
         $steamGroup->get('/item/{itemName}', [SteamController::class, 'getItemPrice']);
         $steamGroup->get('/search', [SteamController::class, 'searchItems']);
         $steamGroup->get('/popular', [SteamController::class, 'getPopularItems']);
+        
+        // Steam Profile Endpoints
+        $steamGroup->group('/profile', function (RouteCollectorProxy $profileGroup) {
+            // Profile search
+            $profileGroup->get('/search', [ProfileController::class, 'searchProfiles']);
+            
+            // Individual profile endpoints
+            $profileGroup->get('/{identifier}', [ProfileController::class, 'getProfile']);
+            $profileGroup->get('/{identifier}/inventory', [ProfileController::class, 'getInventory']);
+            $profileGroup->get('/{identifier}/friends', [ProfileController::class, 'getFriends']);
+            $profileGroup->get('/{identifier}/games/recent', [ProfileController::class, 'getRecentGames']);
+        });
     });
 });
 
