@@ -14,7 +14,7 @@ use Psr\Log\LoggerInterface;
  * Handles API authentication and error management.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 class SteamMarketService

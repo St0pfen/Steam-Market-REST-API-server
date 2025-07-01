@@ -16,7 +16,7 @@ use Monolog\Formatter\LineFormatter;
  * with automatic log rotation and formatting.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 class LoggerService

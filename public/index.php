@@ -7,7 +7,7 @@
  * and handles the application bootstrap process.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 

@@ -6,7 +6,7 @@
  * including basic functionality, error handling, and response validation.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 

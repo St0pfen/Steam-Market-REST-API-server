@@ -10,7 +10,7 @@ namespace App\Helpers;
  * environment variables, and configuration management.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 class ConfigHelper

@@ -16,7 +16,7 @@ use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
  * capabilities for API usage tracking.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 class IpLoggingMiddleware

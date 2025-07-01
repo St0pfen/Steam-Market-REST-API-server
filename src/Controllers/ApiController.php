@@ -14,7 +14,7 @@ use App\Helpers\ConfigHelper;
  * Provides basic API functionality and generates dynamic API documentation.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 class ApiController

@@ -16,7 +16,7 @@ use Psr\Log\LoggerInterface;
  * Integrates with Steam Market API through the SteamMarketService.
  *
  * @package stopfen/steam-rest-api-php
- * @author @StopfMich
+ * @author Stopfen
  * @version 1.0.0
  */
 class SteamController
