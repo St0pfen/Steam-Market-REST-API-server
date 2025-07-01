@@ -8,7 +8,7 @@ A PHP REST API for retrieving Steam Market data with comprehensive logging and C
 
 # Steam Market REST API
 
-A PHP REST API for retrieving Steam Market data using the `allyans3/steam-market-api-v2` library.
+A PHP REST API for retrieving Steam Market/Profile and Game data
 
 ## 🚀 Features
 
@@ -20,16 +20,44 @@ A PHP REST API for retrieving Steam Market data using the `allyans3/steam-market
 - **REST API**: Clean JSON endpoints for Python/JavaScript clients
 - **Error Handling**: Robust error handling and logging
 - **IP Logging**: Complete request logging with IP tracking
-- **Admin Endpoints**: View access logs and log statistics
 - **Documentation**: Integrated API documentation
 
+## 📖 Documentation
+[I tried to create a comprehensive Wiki in the Wiki-TAB](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki)
+
+## 💚 Contributing
+Thank you for your interest in contributing to the Steam Market REST API! This document outlines the process for contributing to the project.
+If you are an absolute beginner, so am I. All ideas and requests are welcome!
+We all have to start somewhere...
+[📖More info in the wiki📖](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki/Contributing)
+
+## 🙏 Used Libraries
+- **allyans3/steam-market-api-v2** - MIT License
+- **slim/slim** - MIT License
+- **slim/psr7** - MIT License  
+- **monolog/monolog** - MIT License
+- **vlucas/phpdotenv** - BSD-3-Clause License
+- **php-di/php-di** - MIT License
+- **phpunit/phpunit** (dev) - BSD-3-Clause License
+
+## 📄 License
+This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+
+[![Creative Commons License](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
+
+---
+
+
+
+
+# 🔎 A quick starter guide and some examples
 ## 📋 Prerequisites
 
 - PHP 7.4+ or 8.0+
 - Composer
 
 ## 🛠️ Installation
-
+[📖Detailed installation guide📖](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki/Installation)
 ```bash
 # Clone repository
 git clone <repository-url>
@@ -46,9 +74,9 @@ php -S localhost:8000 -t public/
 ```
 
 ## ⚙️ Configuration
+[📖Detailed configuration guide📖](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki/Configuration)
 
 ### Environment Variables
-
 Create a `.env` file in the root directory with the following variables:
 
 ```env
@@ -74,18 +102,8 @@ Some Steam Profile endpoints require a Steam Web API key:
 1. **Get your Steam API key** from: https://steamcommunity.com/dev/apikey
 2. **Add it to your `.env`** file as `STEAM_API_KEY=your_key_here`
 
-**Endpoints that require API key:**
-- Friends list (`/api/v1/steam/profile/{id}/friends`)
-- Recently played games (`/api/v1/steam/profile/{id}/games/recent`)
-- Vanity URL resolution (fallback to community XML without key)
-
-**Endpoints that work without API key:**
-- Profile info (limited data via community XML)
-- Inventory (community endpoint)
-- Steam64 ID profile lookup
-
 ## 📡 API Endpoints
-
+[📖Detailed endpoints📖](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki/API-Reference)
 ### Base Endpoints
 - `GET /` - API Info
 - `GET /api/v1/test` - API Test
@@ -113,7 +131,7 @@ Some Steam Profile endpoints require a Steam Web API key:
 - Full profile URL (e.g., `https://steamcommunity.com/id/StuntmanLT/`)
 
 ## 🔍 Examples
-
+[📖More examples📖](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki/Examples)
 ### Search App by Name
 ```bash
 curl "http://localhost:8000/api/v1/steam/find-app?name=Counter-Strike"
@@ -152,46 +170,6 @@ curl "http://localhost:8000/api/v1/steam/profile/76561198037867621/friends"
 
 # Get recent games (requires STEAM_API_KEY)
 curl "http://localhost:8000/api/v1/steam/profile/76561198037867621/games/recent"
-```
-
-### Python Example
-```python
-import requests
-
-# API Base URL
-api_url = "http://localhost:8000/api/v1"
-
-# Get item price
-response = requests.get(f"{api_url}/steam/item/AK-47 | Redline (Field-Tested)")
-data = response.json()
-print(f"Price: {data['lowest_price']}")
-print(f"Image: {data['image_url']}")
-
-# Search items
-search_response = requests.get(f"{api_url}/steam/search", params={
-    "q": "AK-47",
-    "count": 5
-})
-items = search_response.json()['items']
-for item in items:
-    print(f"{item['name']}: {item['sell_price']} - {item['image_url']}")
-
-# Steam Profile Examples
-# Get profile info
-profile_response = requests.get(f"{api_url}/steam/profile/76561198037867621")
-profile_data = profile_response.json()
-print(f"Player: {profile_data['profile']['personaname']}")
-print(f"Avatar: {profile_data['profile']['avatarfull']}")
-
-# Get inventory
-inventory_response = requests.get(f"{api_url}/steam/profile/76561198037867621/inventory")
-inventory_data = inventory_response.json()
-print(f"Items in inventory: {len(inventory_data['inventory']['items'])}")
-
-# Get friends list (requires API key)
-friends_response = requests.get(f"{api_url}/steam/profile/76561198037867621/friends")
-friends_data = friends_response.json()
-print(f"Friends count: {friends_data['friends']['friends_count']}")
 ```
 
 ## 📄 API Response Examples
@@ -324,47 +302,4 @@ print(f"Friends count: {friends_data['friends']['friends_count']}")
 }
 ```
 
-## 📄 License
 
-[![Creative Commons License](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
-
-This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
-
-### What does this mean?
-
-**✅ You are free to:**
-- **Share** — copy and redistribute the material in any medium or format
-- **Adapt** — remix, transform, and build upon the material
-
-**⚠️ Under the following terms:**
-- **Attribution** — You must give appropriate credit, provide a link to the license, and indicate if changes were made
-- **NonCommercial** — You may not use the material for commercial purposes
-- **ShareAlike** — If you remix, transform, or build upon the material, you must distribute your contributions under the same license as the original
-
-### Notes on Commercial Use
-
-**For Commercial Use:** This project may not be used commercially.
-
-**What counts as commercial:**
-- Selling the software or services
-- Use in commercial products
-- Monetizing services that use this API
-- Any direct or indirect profit generation
-
-**Non-commercial use includes:**
-- Personal projects
-- Educational purposes
-- Open-source projects without profit intent
-- Research and development
-
-## 🙏 Used Libraries
-
-- **allyans3/steam-market-api-v2** - MIT License
-- **slim/slim** - MIT License
-- **slim/psr7** - MIT License  
-- **monolog/monolog** - MIT License
-- **vlucas/phpdotenv** - BSD-3-Clause License
-- **php-di/php-di** - MIT License
-- **phpunit/phpunit** (dev) - BSD-3-Clause License
-
-All used libraries are available under very liberal open-source licenses and permit use in this project.
