@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 📚 Documentation
+    url: https://github.com/StopfMich/Steam_API_PHP/wiki
+    about: Check the comprehensive wiki for guides and examples
+  - name: 💬 Discussions
+    url: https://github.com/StopfMich/Steam_API_PHP/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 🔗 Steam API Documentation
+    url: https://developer.valvesoftware.com/wiki/Steam_Web_API
+    about: Official Steam Web API documentation
