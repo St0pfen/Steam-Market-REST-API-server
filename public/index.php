@@ -1,4 +1,16 @@
 <?php
+/**
+ * Steam Market REST API - Main Entry Point
+ * 
+ * This file serves as the main entry point for the Steam Market REST API.
+ * It initializes the Slim framework, configures middleware, sets up routing,
+ * and handles the application bootstrap process.
+ *
+ * @package stopfen/steam-rest-api-php
+ * @author Stopfen
+ * @version 1.0.0
+ */
+
 declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
@@ -9,20 +21,20 @@ use Psr\Http\Message\ServerRequestInterface as Request;
 use App\Middleware\IpLoggingMiddleware;
 use App\Helpers\ConfigHelper;
 
-// Load environment variables
+// Load environment variables from .env file
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__ . '/..');
 $dotenv->safeLoad();
 
-// Create App
+// Create Slim application instance
 $app = AppFactory::create();
 
-// Add error middleware
+// Add error middleware with configuration from environment
 $app->addErrorMiddleware(ConfigHelper::app('debug'), true, true);
 
-// Add IP Logging Middleware
+// Add IP Logging Middleware for request tracking
 $app->add(new IpLoggingMiddleware());
 
-// CORS Middleware using ConfigHelper
+// CORS Middleware using centralized configuration
 $app->add(function (Request $request, $handler) {
     $response = $handler->handle($request);
     return $response
@@ -31,7 +43,12 @@ $app->add(function (Request $request, $handler) {
         ->withHeader('Access-Control-Allow-Methods', ConfigHelper::cors('allow_methods'));
 });
 
-// Default route
+/**
+ * Default route - API welcome endpoint
+ * 
+ * Provides basic API information and navigation links
+ * for users accessing the root endpoint.
+ */
 $app->get('/', function (Request $request, Response $response) {
     $data = [
         'message' => 'Welcome to ' . ConfigHelper::app('name'),
@@ -45,7 +62,8 @@ $app->get('/', function (Request $request, Response $response) {
     return $response->withHeader('Content-Type', ConfigHelper::app('content_type'));
 });
 
-// Load API routes
+// Load API routes from separate file
 require __DIR__ . '/../src/Routes/api.php';
 
+// Run the application
 $app->run();

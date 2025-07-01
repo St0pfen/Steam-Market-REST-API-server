@@ -8,11 +8,39 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
 
+/**
+ * Steam Controller
+ * 
+ * Handles all Steam Market API related endpoints including item pricing,
+ * search functionality, app information, and market data retrieval.
+ * Integrates with Steam Market API through the SteamMarketService.
+ *
+ * @package stopfen/steam-rest-api-php
+ * @author Stopfen
+ * @version 1.0.0
+ */
 class SteamController
 {
+    /**
+     * Steam Market service instance for API calls
+     * @var SteamMarketService
+     */
     private SteamMarketService $steamService;
+    
+    /**
+     * Optional logger instance for request logging
+     * @var LoggerInterface|null
+     */
     private ?LoggerInterface $logger;
     
+    /**
+     * SteamController constructor
+     * 
+     * Initializes the controller with optional logger and creates
+     * a new instance of SteamMarketService for handling API calls.
+     *
+     * @param LoggerInterface|null $logger Optional logger instance for request logging
+     */
     public function __construct(?LoggerInterface $logger = null)
     {
         $this->steamService = new SteamMarketService($logger);
@@ -20,8 +48,17 @@ class SteamController
     }
     
     /**
-     * GET /api/v1/steam/item/{itemName}
-     * Get the price of a specific item
+     * Get Steam Market item price
+     * 
+     * Retrieves pricing information for a specific Steam Market item
+     * including lowest price, median price, and trading volume.
+     *
+     * @param Request $request The HTTP request object
+     * @param Response $response The HTTP response object
+     * @param array $args Route arguments containing itemName
+     * @return Response JSON response with item price data or error message
+     * 
+     * @route GET /api/v1/steam/item/{itemName}
      */
     public function getItemPrice(Request $request, Response $response, array $args): Response
     {
@@ -45,8 +82,16 @@ class SteamController
     }
     
     /**
-     * GET /api/v1/steam/search
-     * Search for items based on a query
+     * Search Steam Market items
+     * 
+     * Searches for Steam Market items based on a query string.
+     * Supports filtering by app ID and limiting result count.
+     *
+     * @param Request $request The HTTP request object containing query parameters
+     * @param Response $response The HTTP response object
+     * @return Response JSON response with search results or error message
+     * 
+     * @route GET /api/v1/steam/search
      */
     public function searchItems(Request $request, Response $response): Response
     {
@@ -74,8 +119,16 @@ class SteamController
     }
     
     /**
-     * GET /api/v1/steam/popular
-     * Get popular items for an app
+     * Get popular Steam Market items
+     * 
+     * Retrieves a list of popular items for a specific Steam application.
+     * Useful for discovering trending items and market activity.
+     *
+     * @param Request $request The HTTP request object containing query parameters
+     * @param Response $response The HTTP response object
+     * @return Response JSON response with popular items or error message
+     * 
+     * @route GET /api/v1/steam/popular
      */
     public function getPopularItems(Request $request, Response $response): Response
     {
@@ -90,8 +143,16 @@ class SteamController
     }
     
     /**
-     * GET /api/v1/steam/apps
-     * Show supported Steam apps
+     * Get supported Steam applications
+     * 
+     * Returns a list of all Steam applications supported by the API
+     * along with their app IDs and market availability status.
+     *
+     * @param Request $request The HTTP request object
+     * @param Response $response The HTTP response object
+     * @return Response JSON response with supported Steam applications
+     * 
+     * @route GET /api/v1/steam/apps
      */
     public function getAppInfo(Request $request, Response $response): Response
     {
@@ -102,8 +163,16 @@ class SteamController
     }
     
     /**
-     * GET /api/v1/steam/status
      * API status and health check
+     * 
+     * Provides API status information, version details, and available endpoints.
+     * Used for monitoring API health and discovering available functionality.
+     *
+     * @param Request $request The HTTP request object
+     * @param Response $response The HTTP response object
+     * @return Response JSON response with API status and endpoint information
+     * 
+     * @route GET /api/v1/steam/status
      */
     public function getStatus(Request $request, Response $response): Response
     {
@@ -127,8 +196,16 @@ class SteamController
     }
     
     /**
-     * GET /api/v1/steam/find-app
-     * Search Steam apps by name
+     * Find Steam application by name
+     * 
+     * Searches for Steam applications by name and returns matching results
+     * with app IDs and market support information.
+     *
+     * @param Request $request The HTTP request object containing query parameters
+     * @param Response $response The HTTP response object
+     * @return Response JSON response with matching Steam applications or error message
+     * 
+     * @route GET /api/v1/steam/find-app
      */
     public function findAppByName(Request $request, Response $response): Response
     {
@@ -149,8 +226,17 @@ class SteamController
     }
     
     /**
-     * GET /api/v1/steam/app/{appId}
-     * Get detailed information about a Steam app
+     * Get detailed Steam application information
+     * 
+     * Retrieves comprehensive information about a specific Steam application
+     * including name, description, market support, and metadata.
+     *
+     * @param Request $request The HTTP request object
+     * @param Response $response The HTTP response object
+     * @param array $args Route arguments containing appId
+     * @return Response JSON response with detailed app information or error message
+     * 
+     * @route GET /api/v1/steam/app/{appId}
      */
     public function getAppDetails(Request $request, Response $response, array $args): Response
     {
