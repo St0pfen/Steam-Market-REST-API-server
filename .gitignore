@@ -83,3 +83,6 @@ config/staging.php
 /storage/
 /bootstrap/cache/
 .phpunit.cache/
+
+# Wiki on GitHub
+/wiki
