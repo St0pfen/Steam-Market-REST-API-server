@@ -8,15 +8,46 @@ use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Http\Server\RequestHandlerInterface as RequestHandler;
 
+/**
+ * IP Logging Middleware
+ * 
+ * PSR-15 middleware that logs IP addresses, request details, and response metrics
+ * for all incoming HTTP requests. Provides detailed analytics and monitoring
+ * capabilities for API usage tracking.
+ *
+ * @package stopfen/steam-rest-api-php
+ * @author Stopfen
+ * @version 1.0.0
+ */
 class IpLoggingMiddleware
 {
+    /**
+     * Logger service instance for request logging
+     * @var LoggerService
+     */
     private LoggerService $logger;
     
+    /**
+     * IpLoggingMiddleware constructor
+     * 
+     * Initializes the middleware with a new LoggerService instance
+     * for handling request and response logging.
+     */
     public function __construct()
     {
         $this->logger = new LoggerService();
     }
     
+    /**
+     * Process an incoming request and log details
+     * 
+     * Handles the HTTP request, measures response time, extracts client information,
+     * and logs comprehensive request/response metrics for monitoring and analytics.
+     *
+     * @param Request $request The incoming HTTP request
+     * @param RequestHandler $handler The request handler to process the request
+     * @return Response The HTTP response after processing and logging
+     */
     public function __invoke(Request $request, RequestHandler $handler): Response
     {
         $startTime = microtime(true);
@@ -55,7 +86,16 @@ class IpLoggingMiddleware
     }
     
     /**
-     * Loggt detaillierte API-Informationen
+     * Log detailed API-specific information
+     * 
+     * Records comprehensive API call details including parameters, timing,
+     * and special handling for Steam API endpoints with performance monitoring.
+     *
+     * @param Request $request The HTTP request object
+     * @param Response $response The HTTP response object
+     * @param string $ip Client IP address
+     * @param float $responseTime Response time in seconds
+     * @return void
      */
     private function logApiDetails(Request $request, Response $response, string $ip, float $responseTime): void
     {
