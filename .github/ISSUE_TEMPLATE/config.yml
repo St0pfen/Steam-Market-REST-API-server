@@ -1,7 +1,7 @@
 blank_issues_enabled: false
 contact_links:
   - name: 📚 Documentation
-    url: https://github.com/StopfMich/Steam_API_PHP/wiki
+    url: https://github.com/StopfMich/Steam-Market-REST-API-server/wiki
     about: Check the comprehensive wiki for guides and examples
   - name: 💬 Discussions
     url: https://github.com/StopfMich/Steam_API_PHP/discussions
