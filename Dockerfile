@@ -1,5 +1,5 @@
 # Multi-stage build for production optimization
-FROM php:8.2-apache as base
+FROM php:8.3-apache as base
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -21,8 +21,14 @@ COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 # Set working directory
 WORKDIR /var/www/html
 
+# Fix git ownership issues
+RUN git config --global --add safe.directory /var/www/html
+
 # Copy composer files first for better caching
-COPY composer.json composer.lock ./
+COPY composer.json ./
+# Note: Not copying composer.lock to allow fresh dependency resolution
+
+# Install dependencies without lock file for compatibility
 RUN composer install --no-dev --optimize-autoloader --no-scripts
 
 # Copy application code
@@ -32,15 +38,15 @@ COPY . .
 RUN mkdir -p logs && chown -R www-data:www-data logs/ && chmod 755 logs/
 
 # Configure Apache
-RUN a2enmod rewrite
+RUN a2enmod rewrite headers
 COPY docker/apache.conf /etc/apache2/sites-available/000-default.conf
 
 # Set proper permissions
 RUN chown -R www-data:www-data /var/www/html \
     && chmod -R 755 /var/www/html
 
-# Copy environment file
-COPY .env.example .env
+# Copy environment file if exists
+RUN if [ -f .env.example ]; then cp .env.example .env; fi
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
@@ -53,7 +59,8 @@ EXPOSE 80
 FROM base as production
 
 # Remove development files
-RUN rm -rf tests/ docker/ .git/ .github/
+RUN rm -rf tests/ docker/ .git/ .github/ \
+    && composer install --no-dev --optimize-autoloader --no-scripts
 
 # Start Apache
 CMD ["apache2-foreground"]
@@ -66,5 +73,10 @@ RUN composer install --optimize-autoloader
 
 # Install Xdebug for development
 RUN pecl install xdebug && docker-php-ext-enable xdebug
+
+# Configure Xdebug
+RUN echo "xdebug.mode=debug" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.client_host=host.docker.internal" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini \
+    && echo "xdebug.client_port=9003" >> /usr/local/etc/php/conf.d/docker-php-ext-xdebug.ini
 
 CMD ["apache2-foreground"]

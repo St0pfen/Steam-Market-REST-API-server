@@ -12,7 +12,8 @@ docker-compose.yml
 tests/
 .phpunit.result.cache
 phpunit.xml
-exemples/
+composer.lock
+examples/
 
 # IDE files
 .vscode/
@@ -31,7 +32,6 @@ logs/*.log
 cache/
 tmp/
 vendor/
-composer.lock
 
 # GitHub specific
 .github/
