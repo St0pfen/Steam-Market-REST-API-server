@@ -1,0 +1,33 @@
+services:
+  steam-api:
+    build:
+      context: .
+      target: development
+    ports:
+      - "8000:80"
+    volumes:
+      - .:/var/www/html
+      - ./logs:/var/www/html/logs
+    environment:
+      - APP_DEBUG=true
+      - LOG_LEVEL=debug
+      - DOCKER_BUILDKIT=0
+    networks:
+      - steam-api-network
+
+  steam-api-prod:
+    build:
+      context: .
+      target: production
+    ports:
+      - "8080:80"
+    environment:
+      - APP_DEBUG=false
+      - LOG_LEVEL=info
+      - DOCKER_BUILDKIT=0
+    networks:
+      - steam-api-network
+
+networks:
+  steam-api-network:
+    driver: bridge

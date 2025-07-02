@@ -1,0 +1,37 @@
+.git
+.gitignore
+README.md
+Dockerfile
+docker-compose.yml
+.dockerignore
+.env
+.env.local
+.env.production
+
+# Development files
+tests/
+.phpunit.result.cache
+phpunit.xml
+composer.lock
+examples/
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs (will be created in container)
+logs/*.log
+
+# Cache and temporary files
+cache/
+tmp/
+vendor/
+
+# GitHub specific
+.github/
