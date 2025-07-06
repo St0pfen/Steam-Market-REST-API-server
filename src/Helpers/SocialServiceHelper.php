@@ -6,6 +6,9 @@ namespace App\Helpers;
 use Exception;
 use Psr\Log\LoggerInterface;
 use App\Helpers\SteamWebApiHelper;
+use App\Helpers\ConfigHelper;
+use PSpell\Config;
+
 /**
  * SocialServiceHelper Class
  *
@@ -40,13 +43,13 @@ class SocialServiceHelper
      * Steam Web API base URL
      * @var string
      */
-    private string $steamApiUrl = 'https://api.steampowered.com';
+    private string $steamApiUrl;
     
     /**
      * Steam Community base URL
      * @var string
      */
-    private string $steamCommunityUrl = 'https://steamcommunity.com';
+    private string $steamCommunityUrl;
 
     /**
      * SocialServiceHelper constructor
@@ -55,7 +58,11 @@ class SocialServiceHelper
      */
     public function __construct(?LoggerInterface $logger = null)
     {
-
+        $this->steamApiUrl = ConfigHelper::steam('api_url');
+        $this->steamCommunityUrl = ConfigHelper::steam('community_url');
+        if (!$this->steamApiUrl || !$this->steamCommunityUrl) {
+            throw new Exception('Steam API or Community URL not configured');
+        }
         $this->logger = $logger;
         $this->apiKey = ConfigHelper::steam('api_key');
         $this->webApi = new SteamWebApiHelper($logger);

@@ -37,16 +37,12 @@ class SteamSocialService
     private SocialServiceHelper $socialHelper;
     /**
      * Steam Web API base URL
-     * @var string
+     * @var string $steamApiUrl
+     * @var string $steamCommunityUrl
      */
-    private string $steamApiUrl = 'https://api.steampowered.com';
-    
-    /**
-     * Steam Community base URL
-     * @var string
-     */
-    private string $steamCommunityUrl = 'https://steamcommunity.com';
-    
+    private string $steamApiUrl;
+    private string $steamCommunityUrl;
+
     /**
      * Steam API key for authenticated requests
      * @var string|null
@@ -66,6 +62,8 @@ class SteamSocialService
      */
     public function __construct(?LoggerInterface $logger = null)
     {
+        $this->steamApiUrl = ConfigHelper::steam('api_url');
+        $this->steamCommunityUrl = ConfigHelper::steam('community_url');
         $this->logger = $logger;
         $this->apiKey = ConfigHelper::steam('api_key');
         $this->socialHelper = new SocialServiceHelper($logger);
@@ -115,7 +113,7 @@ class SteamSocialService
         }
     }
 
-        public function getProfile(string $steamId): ?array
+    public function getProfile(string $steamId): ?array
     {
         try {
             if (!$this->apiKey) {

@@ -48,7 +48,7 @@ class ConfigHelper
      * @param string|null $key Specific configuration key to retrieve, or null for all settings
      * @return mixed Single configuration value if key specified, or array of all settings
      */
-    public static function app(string $key = null)
+    public static function app(string $key)
     {
         $config = [
             'name' => self::env('APP_NAME', 'Steam REST API'),
@@ -91,10 +91,12 @@ class ConfigHelper
      * @param string|null $key Specific Steam configuration key to retrieve, or null for all settings
      * @return mixed Single Steam configuration value if key specified, or array of all Steam settings
      */
-    public static function steam(string $key = null)
+    public static function steam(string $key)
     {
         $config = [
             'api_key' => self::env('STEAM_API_KEY', null),
+            'api_url' => self::env('STEAM_API_URL', 'https://api.steampowered.com'),
+            'community_url' => self::env('STEAM_COMMUNITY_URL', 'https://steamcommunity.com')
         ];
         
         return $key ? ($config[$key] ?? null) : $config;

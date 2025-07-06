@@ -20,6 +20,7 @@ use App\Controllers\ProfileController;
 use App\Controllers\SteamShopController;
 use App\Controllers\SteamMarketController;
 use App\Controllers\SteamSocialController;
+use App\Controllers\SteamInventoryController;
 use App\Controllers\ToolsController;
 
 // Main API Routes Group - Version 1
@@ -43,23 +44,21 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
             $marketGroup->get('/item/{itemName}', [SteamMarketController::class, 'getItemPrice']);
             $marketGroup->get('/search', [SteamMarketController::class, 'searchItems']);
             $marketGroup->get('/popular', [SteamMarketController::class, 'getPopularItems']);
-            $marketGroup->get('/trending', [SteamMarketController::class, 'getTrendingItems']);
-            $marketGroup->get('/categories', [SteamMarketController::class, 'getCategories']);
+            $marketGroup->get('/categories', [SteamMarketController::class, 'getCategories']); //todo
         });
         // Profile Endpoints
         $steamGroup->group('/profile', function (RouteCollectorProxy $profileGroup) {
-            $profileGroup->get('/search', [SteamSocialController::class, 'searchProfiles']);
+            $profileGroup->get('/search', [SteamSocialController::class, 'searchProfiles']); //todo
             $profileGroup->get('/{identifier}', [SteamSocialController::class, 'getProfile']);
             $profileGroup->get('/friends/{identifier}', [SteamSocialController::class, 'getFriends']);
             $profileGroup->get('/level/{identifier}', [SteamSocialController::class, 'getProfileLevel']);
             $profileGroup->get('/summary/{identifier}', [SteamSocialController::class, 'getProfileSummary']);
             $profileGroup->get('/games/recent/{identifier}', [SteamSocialController::class, 'getRecentGames']);
-            $profileGroup->get('/trade-link/{identifier}', [SteamSocialController::class, 'getTradeLink']);
         });
         $steamGroup->group('/inventory', function (RouteCollectorProxy $inventoryGroup) {
             $inventoryGroup->get('/{identifier}', [SteamInventoryController::class, 'getInventory']);
-            $inventoryGroup->get('/value/{identifier}', [SteamInventoryController::class, 'getInventoryValue']);
-            $inventoryGroup->get('/trade-link/{identifier}', [SteamInventoryController::class, 'getTradeLink']);
+            $inventoryGroup->get('/value/{identifier}', [SteamInventoryController::class, 'getInventoryValue']); //todo
+            $inventoryGroup->get('/trade-link/{identifier}', [SteamInventoryController::class, 'getTradeLink']); //todo
         });
     });
 });
