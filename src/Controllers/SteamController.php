@@ -62,7 +62,45 @@ class SteamController
      */
     public function getAppInfo(Request $request, Response $response): Response
     {
-        $data = $this->steamService->getSupportedApps();
+        $data = [
+            'apps' => [
+                 730 => [
+                    'name' => 'Counter-Strike 2',
+                    'description' => 'CS2 Items and Skins',
+                    'has_market' => true,
+                    'verified' => true
+                ],
+                570 => [
+                    'name' => 'Dota 2',
+                    'description' => 'Dota 2 Items and Cosmetics',
+                    'has_market' => true,
+                    'verified' => true
+                ],
+                440 => [
+                    'name' => 'Team Fortress 2',
+                    'description' => 'TF2 Items and Hats',
+                    'has_market' => true,
+                    'verified' => true
+                ],
+                252490 => [
+                    'name' => 'Rust',
+                    'description' => 'Rust Items and Skins',
+                    'has_market' => true,
+                    'verified' => true
+                ],
+                304930 => [
+                    'name' => 'Unturned',
+                    'description' => 'Unturned Items',
+                    'has_market' => true,
+                    'verified' => true
+                ]
+            ],
+            'default_app' => 730,
+            'note' => 'Use /api/v1/steam/find-app?name={app_name} to find other Steam apps',
+            'dynamic_search' => true,
+            'success' => true,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
         
         $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json');

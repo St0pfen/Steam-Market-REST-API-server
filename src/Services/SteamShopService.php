@@ -5,7 +5,6 @@ namespace App\Services;
 
 use SteamApi\SteamApi;
 use Psr\Log\LoggerInterface;
-use App\Helpers\LogHelper;
 
 /**
  * SteamShopService
@@ -22,12 +21,6 @@ class SteamShopService
     private SteamApi $steamApi;
     
     /**
-     * Optional logger instance for API call logging
-     * @var LogHelper|null
-     */
-    private ?LogHelper $logger;
-    
-    /**
      * SteamMarketService constructor
      * 
      * Initializes the Steam API client with optional API key
@@ -35,6 +28,7 @@ class SteamShopService
      *
      * @param LoggerInterface|null $logger Optional logger for API call tracking
      */
+    private ?LoggerInterface $logger;
     public function __construct(?LoggerInterface $logger = null)
     {
         $apiKey = $_ENV['STEAM_API_KEY'] ?? null;
@@ -45,7 +39,6 @@ class SteamShopService
             // Without API key (limited functionality)
             $this->steamApi = new SteamApi();
         }
-        
         $this->logger = $logger;
     }
 
@@ -63,7 +56,9 @@ class SteamShopService
     public function findAppByName(string $appName): array
     {
         try {
-            $this->logger->log('info', "Searching for app: {$appName}");
+            if ($this->logger) {
+                $this->logger->log('info', "Searching for app: {$appName}");
+            }
 
             // Use Steam Store API for app search
             $searchUrl = "https://store.steampowered.com/api/storesearch/?term=" . urlencode($appName) . "&l=english&cc=US";
@@ -95,7 +90,9 @@ class SteamShopService
             ];
             
         } catch (\Exception $e) {
-            $this->logger->log('error', "Error finding app by name: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->log('error', "Error finding app by name: " . $e->getMessage());
+            }
             return [
                 'error' => $e->getMessage(),
                 'search_term' => $appName,
@@ -119,7 +116,9 @@ class SteamShopService
     public function getAppDetails(int $appId): array
     {
         try {
-            $this->logger->log('info', "Fetching app details for: {$appId}");
+            if ($this->logger) {
+                $this->logger->log('info', "Fetching app details for: {$appId}");
+            }
 
             // Steam Store API for app details
             $detailsUrl = "https://store.steampowered.com/api/appdetails?appids={$appId}&l=english";
@@ -155,7 +154,9 @@ class SteamShopService
             ];
             
         } catch (\Exception $e) {
-            $this->logger->log('error', "Error fetching app details: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->log('error', "Error fetching app details: " . $e->getMessage());
+            }
             return [
                 'error' => $e->getMessage(),
                 'app_id' => $appId,

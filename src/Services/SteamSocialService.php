@@ -62,13 +62,18 @@ class SteamSocialService
      */
     public function __construct(?LoggerInterface $logger = null)
     {
-        $this->steamApiUrl = ConfigHelper::steam('api_url');
-        $this->steamCommunityUrl = ConfigHelper::steam('community_url');
+        $apiUrl = ConfigHelper::steam('api_url');
+        $communityUrl = ConfigHelper::steam('community_url');
+        $apiKey = ConfigHelper::steam('api_key');
+
+        // Handle missing config gracefully
+        $this->steamApiUrl = is_string($apiUrl) ? $apiUrl : '';
+        $this->steamCommunityUrl = is_string($communityUrl) ? $communityUrl : '';
+        $this->apiKey = is_string($apiKey) ? $apiKey : null;
         $this->logger = $logger;
-        $this->apiKey = ConfigHelper::steam('api_key');
         $this->socialHelper = new SocialServiceHelper($logger);
         $this->webApi = new SteamWebApiHelper($logger);
-        
+
         if ($this->logger) {
             $this->logger->info('SteamProfileService initialized', [
                 'has_api_key' => !empty($this->apiKey)

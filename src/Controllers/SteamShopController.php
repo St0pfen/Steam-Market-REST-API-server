@@ -3,7 +3,7 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
-use App\Services\SteamShopService;
+use App\Services\SteamShopService as SteamShopService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 use Psr\Log\LoggerInterface;
@@ -19,7 +19,7 @@ class SteamShopController
      * SteamShopService instance for handling shop-related operations
      * @var SteamShopService
      */
-    private SteamShopService $steamService;
+    private SteamShopService $steamShopService;
     /**
      * Optional logger instance for request logging
      * @var LoggerInterface|null
@@ -34,10 +34,10 @@ class SteamShopController
      * @param SteamShopService $steamService The service for handling Steam shop operations
      * @param LoggerInterface|null $logger Optional logger for request logging
      */
-    public function __construct(SteamShopService $steamService, ?LoggerInterface $logger = null)
+    public function __construct(?LoggerInterface $logger = null)
     {
-        $this->steamService = $steamService;
         $this->logger = $logger;
+        $this->steamShopService = new SteamShopService($logger);
     }
 
     /**
@@ -64,7 +64,7 @@ class SteamShopController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
         
-        $data = $this->steamService->findAppByName($appName);
+        $data = $this->steamShopService->findAppByName($appName);
         
         $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json');
@@ -98,7 +98,7 @@ class SteamShopController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
         
-        $data = $this->steamService->getAppDetails($appId);
+        $data = $this->steamShopService->getAppDetails($appId);
         
         $statusCode = $data['success'] ? 200 : 404;
         $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));

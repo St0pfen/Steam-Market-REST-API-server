@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use SteamApi\SteamApi;
+use App\Helpers\SteamImageHelper;
 use App\Helpers\LogHelper;
 use Psr\Log\LoggerInterface;
 
@@ -26,6 +27,12 @@ class SteamMarketService
      */
     private SteamApi $steamApi;
     
+    /**
+     * Image helper for retrieving item images
+     * @var SteamImageHelper
+     */
+    private SteamImageHelper $imageHelper;
+
     /**
      * Optional logger instance for API call logging
      * @var LogHelper|null
@@ -52,6 +59,7 @@ class SteamMarketService
         }
         
         $this->logger = $logger;
+        $this->imageHelper = new SteamImageHelper($logger);
     }
     
     /**
@@ -68,7 +76,9 @@ class SteamMarketService
     public function getItemPrice(string $itemName, int $appId = 730): array
     {
         try {
-            $this->logger->log('info', "Fetching price for item: {$itemName} (App: {$appId})");
+            if ($this->logger) {
+                $this->logger->log('info', "Fetching price for item: {$itemName} (App: {$appId})");
+            }
             
             $options = [
                 'market_hash_name' => $itemName,
@@ -81,7 +91,7 @@ class SteamMarketService
             if ($response && isset($response['response'])) {
                 $data = $response['response'];
                       // Since getItemPricing doesn't provide image URL, we try a search
-            $imageUrl = $this->getItemImageFromMarket($itemName, $appId);
+            $imageUrl = $this->imageHelper->getItemImageFromMarket($itemName, $appId);
                 
                 $result = [
                     'item_name' => $itemName,
@@ -105,11 +115,15 @@ class SteamMarketService
                 ];
             }
             
-            $this->logger->log('info', "Successfully fetched price for: {$itemName}");
+            if ($this->logger) {
+                $this->logger->log('info', "Successfully fetched price for: {$itemName}");
+            }
             return $result;
             
         } catch (\Exception $e) {
-            $this->logger->log('error', "Error fetching item price: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->log('error', "Error fetching item price: " . $e->getMessage());
+            }
             return [
                 'error' => $e->getMessage(),
                 'item_name' => $itemName,
@@ -135,7 +149,9 @@ class SteamMarketService
     public function searchItems(string $query, int $appId = 730, int $count = 10): array
     {
         try {
-            $this->logger->log('info', "Searching for items: {$query} (App: {$appId}, Count: {$count})");
+            if ($this->logger) {
+                $this->logger->log('info', "Searching for items: {$query} (App: {$appId}, Count: {$count})");
+            }
 
             $options = [
                 'query' => $query,
@@ -150,8 +166,8 @@ class SteamMarketService
             if ($response && isset($response['response']) && isset($response['response']['results'])) {
                 foreach ($response['response']['results'] as $item) {
                     // Extract image URL from item data
-                    $imageUrl = $this->extractImageFromItem($item);
-                    
+                    $imageUrl = $this->imageHelper->extractImageFromItem($item);
+
                     $items[] = [
                         'name' => $item['name'] ?? 'Unknown',
                         'hash_name' => $item['hash_name'] ?? '',
@@ -166,7 +182,9 @@ class SteamMarketService
                 }
             }
 
-            $this->logger->log('info', "Found " . count($items) . " items for query: {$query}");
+            if ($this->logger) {
+                $this->logger->log('info', "Found " . count($items) . " items for query: {$query}");
+            }
 
             return [
                 'items' => $items,
@@ -178,7 +196,9 @@ class SteamMarketService
             ];
             
         } catch (\Exception $e) {
-            $this->logger->log('error', "Error searching items: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->log('error', "Error searching items: " . $e->getMessage());
+            }
             return [
                 'error' => $e->getMessage(),
                 'query' => $query,
@@ -202,7 +222,9 @@ class SteamMarketService
     public function getPopularItems(int $appId = 730): array
     {
         try {
-            $this->logger->log('info', "Fetching popular items for app: {$appId}");
+            if ($this->logger) {
+                $this->logger->log('info', "Fetching popular items for app: {$appId}");
+            }
 
             // Since the API has no direct "Popular Items" function,
             // we search for popular items with an empty query
@@ -219,8 +241,8 @@ class SteamMarketService
             if ($response && isset($response['response']) && isset($response['response']['results'])) {
                 foreach ($response['response']['results'] as $item) {
                     // Extract image URL from item data
-                    $imageUrl = $this->extractImageFromItem($item);
-                    
+                    $imageUrl = $this->imageHelper->extractImageFromItem($item);
+
                     $popularItems[] = [
                         'name' => $item['name'] ?? 'Unknown',
                         'hash_name' => $item['hash_name'] ?? '',
@@ -232,7 +254,9 @@ class SteamMarketService
                 }
             }
 
-            $this->logger->log('info', "Found " . count($popularItems) . " popular items");
+            if ($this->logger) {
+                $this->logger->log('info', "Found " . count($popularItems) . " popular items");
+            }
 
             return [
                 'items' => $popularItems,
@@ -243,7 +267,9 @@ class SteamMarketService
             ];
             
         } catch (\Exception $e) {
-            $this->logger->log('error', "Error fetching popular items: " . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->log('error', "Error fetching popular items: " . $e->getMessage());
+            }
             return [
                 'error' => $e->getMessage(),
                 'app_id' => $appId,
@@ -252,207 +278,7 @@ class SteamMarketService
             ];
         }
     }
-    
-    /**
-     * Find Steam application by name
-     * 
-     * Searches for Steam applications matching the provided name
-     * and returns relevant app IDs and information.
-     *
-     * @param string $appName Name of the Steam application to search for
-     * @return array Search results with matching applications and metadata
-     * @throws \Exception When API call fails or returns invalid data
-     */
-    public function findAppByName(string $appName): array
-    {
-        try {
-            $this->logger->log('info', "Searching for app: {$appName}");
 
-            // Use Steam Store API for app search
-            $searchUrl = "https://store.steampowered.com/api/storesearch/?term=" . urlencode($appName) . "&l=english&cc=US";
-            
-            $response = file_get_contents($searchUrl);
-            $data = json_decode($response, true);
-            
-            $apps = [];
-            if ($data && isset($data['items'])) {
-                foreach ($data['items'] as $item) {
-                    if ($item['type'] === 'app') {
-                        $apps[] = [
-                            'id' => (int)$item['id'],
-                            'name' => $item['name'],
-                            'type' => $item['type'],
-                            'tiny_image' => $item['tiny_image'] ?? null,
-                            'price' => $item['price']['final'] ?? null
-                        ];
-                    }
-                }
-            }
-            
-            return [
-                'apps' => $apps,
-                'search_term' => $appName,
-                'count' => count($apps),
-                'success' => true,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-            
-        } catch (\Exception $e) {
-            $this->logger->log('error', "Error finding app by name: " . $e->getMessage());
-            return [
-                'error' => $e->getMessage(),
-                'search_term' => $appName,
-                'success' => false,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-        }
-    }
-    
-    /**
-     * Get detailed Steam application information
-     * 
-     * Retrieves comprehensive information about a Steam application
-     * including name, description, market support, and metadata.
-     *
-     * @param int $appId Steam application ID
-     * @return array Detailed application information with success status
-     * @throws \Exception When API call fails or returns invalid data
-     */
-    public function getAppDetails(int $appId): array
-    {
-        try {
-            $this->logger->log('info', "Fetching app details for: {$appId}");
-
-            // Steam Store API for app details
-            $detailsUrl = "https://store.steampowered.com/api/appdetails?appids={$appId}&l=english";
-            
-            $response = file_get_contents($detailsUrl);
-            $data = json_decode($response, true);
-            
-            if ($data && isset($data[$appId]) && $data[$appId]['success']) {
-                $appData = $data[$appId]['data'];
-                
-                return [
-                    'app_id' => $appId,
-                    'name' => $appData['name'],
-                    'type' => $appData['type'] ?? 'game',
-                    'is_free' => $appData['is_free'] ?? false,
-                    'description' => $appData['short_description'] ?? '',
-                    'developers' => $appData['developers'] ?? [],
-                    'publishers' => $appData['publishers'] ?? [],
-                    'categories' => array_map(fn($cat) => $cat['description'], $appData['categories'] ?? []),
-                    'genres' => array_map(fn($genre) => $genre['description'], $appData['genres'] ?? []),
-                    'header_image' => $appData['header_image'] ?? null,
-                    'has_market' => $this->checkMarketSupport($appId),
-                    'success' => true,
-                    'timestamp' => date('Y-m-d H:i:s')
-                ];
-            }
-            
-            return [
-                'error' => 'App not found or not available',
-                'app_id' => $appId,
-                'success' => false,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-            
-        } catch (\Exception $e) {
-            $this->logger->log('error', "Error fetching app details: " . $e->getMessage());
-            return [
-                'error' => $e->getMessage(),
-                'app_id' => $appId,
-                'success' => false,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-        }
-    }
-    
-    /**
-     * Check if a Steam application has Market support
-     * 
-     * Tests whether the specified application supports Steam Market
-     * transactions by attempting a test API call.
-     *
-     * @param int $appId Steam application ID to check
-     * @return bool True if the app supports Steam Market, false otherwise
-     */
-    private function checkMarketSupport(int $appId): bool
-    {
-        try {
-            // Test with a simple market request
-            $testUrl = "https://steamcommunity.com/market/search/render/?appid={$appId}&norender=1&count=1";
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 5,
-                    'user_agent' => 'Mozilla/5.0 (compatible; Steam Market API)'
-                ]
-            ]);
-            $response = @file_get_contents($testUrl, false, $context);
-            
-            if ($response) {
-                $data = json_decode($response, true);
-                return isset($data['total_count']) && $data['total_count'] > 0;
-            }
-            
-            return false;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-
-    /**
-     * Get list of supported Steam applications
-     * 
-     * Returns a curated list of Steam applications that support
-     * the Market API with their names and descriptions.
-     *
-     * @return array Array of supported applications with app IDs as keys
-     */
-    public function getSupportedApps(): array
-    {
-        $staticApps = [
-            730 => [
-                'name' => 'Counter-Strike 2',
-                'description' => 'CS2 Items and Skins',
-                'has_market' => true,
-                'verified' => true
-            ],
-            570 => [
-                'name' => 'Dota 2',
-                'description' => 'Dota 2 Items and Cosmetics',
-                'has_market' => true,
-                'verified' => true
-            ],
-            440 => [
-                'name' => 'Team Fortress 2',
-                'description' => 'TF2 Items and Hats',
-                'has_market' => true,
-                'verified' => true
-            ],
-            252490 => [
-                'name' => 'Rust',
-                'description' => 'Rust Items and Skins',
-                'has_market' => true,
-                'verified' => true
-            ],
-            304930 => [
-                'name' => 'Unturned',
-                'description' => 'Unturned Items',
-                'has_market' => true,
-                'verified' => true
-            ]
-        ];
-
-        return [
-            'apps' => $staticApps,
-            'default_app_id' => 730,
-            'note' => 'Use /api/v1/steam/find-app?name={app_name} to find other Steam apps',
-            'dynamic_search' => true,
-            'success' => true,
-            'timestamp' => date('Y-m-d H:i:s')
-        ];
-    }
-    
     /**
      * Build full Steam Community image URL from icon fragment
      * 
@@ -462,113 +288,7 @@ class SteamMarketService
      * @param string|null $iconUrl Partial icon URL or null
      * @return string|null Complete Steam Community image URL or null
      */
-    private function buildImageUrl(?string $iconUrl): ?string
-    {
-        if (empty($iconUrl)) {
-            return null;
-        }
-        
-        // Steam CDN base URL
-        $baseUrl = 'https://community.cloudflare.steamstatic.com/economy/image/';
-        
-        // If URL is already complete, return it
-        if (str_starts_with($iconUrl, 'http')) {
-            return $iconUrl;
-        }
-        
-        return $baseUrl . $iconUrl;
-    }
-    
-    /**
-     * Get item image URL from Steam Market using market hash name
-     * 
-     * Alternative method to retrieve item images by searching
-     * the Steam Market for the specific item name.
-     *
-     * @param string $marketHashName The market hash name of the item
-     * @param int $appId Steam application ID
-     * @return string|null Item image URL or null if not found
-     */
-    private function getItemImageFromMarket(string $marketHashName, int $appId): ?string
-    {
-        try {
-            // Use the Steam Market Listing API to get more details
-            $url = "https://steamcommunity.com/market/listings/{$appId}/" . urlencode($marketHashName);
-            
-            // For now we use the search function as fallback
-            $searchOptions = [
-                'query' => $marketHashName,
-                'start' => 0,
-                'count' => 1,
-                'search_descriptions' => false
-            ];
-            
-            $searchResponse = $this->steamApi->detailed()->searchItems($appId, $searchOptions);
-            if ($searchResponse && isset($searchResponse['response']['results'][0])) {
-                $item = $searchResponse['response']['results'][0];
-                if (isset($item['asset_description']['icon_url'])) {
-                    return $this->buildImageUrl($item['asset_description']['icon_url']);
-                }
-            }
-            
-            return null;
-        } catch (\Exception $e) {
-            $this->logger->log('warning', "Could not fetch item image from market: " . $e->getMessage());
-            return null;
-        }
-    }
 
-    /**
-     * Extract image URL from item data array
-     * 
-     * Searches through various possible fields in item data
-     * to find and extract the item's image URL.
-     *
-     * @param array $item Item data array from Steam API
-     * @return string|null Item image URL or null if not found
-     */
-    private function extractImageFromItem(array $item): ?string
-    {
-        // Check various fields where image URLs can be found
-        $imageFields = [
-            'asset_description.icon_url_large',
-            'asset_description.icon_url', 
-            'icon_url_large',
-            'icon_url'
-        ];
-        
-        foreach ($imageFields as $field) {
-            $value = $this->getNestedValue($item, $field);
-            if ($value) {
-                return $this->buildImageUrl($value);
-            }
-        }
-        
-        return null;
-    }
     
-    /**
-     * Retrieve nested array value using dot notation
-     * 
-     * Helper method to safely extract values from nested arrays
-     * using a dot-separated path string.
-     *
-     * @param array $array Array to search in
-     * @param string $path Dot-separated path to the desired value
-     * @return mixed Found value or null if path doesn't exist
-     */
-    private function getNestedValue(array $array, string $path): mixed
-    {
-        $keys = explode('.', $path);
-        $current = $array;
-        
-        foreach ($keys as $key) {
-            if (!is_array($current) || !isset($current[$key])) {
-                return null;
-            }
-            $current = $current[$key];
-        }
-        
-        return $current;
-    }
+
 }

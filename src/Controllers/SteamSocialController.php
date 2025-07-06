@@ -35,15 +35,14 @@ class SteamSocialController
     /**
      * Constructor
      * 
-     * Initializes the SteamSocialService and optional logger.
-     *
-     * @param SteamSocialService $socialService The service for handling Steam social operations
-     * @param LoggerInterface|null $logger Optional logger for request logging
+     * Instantiates the SteamSocialService internally.
      */
-    public function __construct(SteamSocialService $socialService, ?LoggerInterface $logger = null)
+    public function __construct(?LoggerInterface $logger = null)
     {
-        $this->socialService = $socialService;
-        $this->logger = $logger;
+        $this->socialService = new SteamSocialService();
+        if ($logger) {
+            $this->logger = $logger;
+        }
     }
 
     /**

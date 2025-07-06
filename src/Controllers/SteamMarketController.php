@@ -22,11 +22,12 @@ class SteamMarketController
 
     /**
      * SteamMarketController constructor
-     * @param SteamMarketService $steamMarketService
+     *
+     * Instantiates the SteamMarketService internally.
      */
-    public function __construct(SteamMarketService $steamMarketService)
+    public function __construct()
     {
-        $this->steamMarketService = $steamMarketService;
+        $this->steamMarketService = new SteamMarketService();
     }
 
     /**
