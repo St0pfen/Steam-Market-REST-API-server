@@ -5,6 +5,7 @@ namespace App\Helpers;
 
 use Exception;
 use Psr\Log\LoggerInterface;
+use App\Helpers\SteamWebApiHelper;
 /**
  * SocialServiceHelper Class
  *
@@ -22,6 +23,12 @@ class SocialServiceHelper
      * @var LoggerInterface|null
      */
     private ?LoggerInterface $logger;
+
+    /**
+     * Helper for social service operations
+     * @var SteamWebApiHelper
+     */
+    private ?SteamWebApiHelper $webApi;
 
     /**
      * Steam API key for authenticated requests
@@ -51,6 +58,7 @@ class SocialServiceHelper
 
         $this->logger = $logger;
         $this->apiKey = ConfigHelper::steam('api_key');
+        $this->webApi = new SteamWebApiHelper($logger);
     }
 
 
@@ -103,7 +111,7 @@ class SocialServiceHelper
                 'vanityurl' => $vanityName
             ];
             
-            $response = $this->makeApiCall($url, $params);
+            $response = $this->webApi->makeApiCall($url, $params);
             
             if ($response && isset($response['response']['steamid']) && $response['response']['success'] == 1) {
                 return $response['response']['steamid'];
@@ -115,81 +123,6 @@ class SocialServiceHelper
             if ($this->logger) {
                 $this->logger->error('Failed to resolve vanity URL', [
                     'vanity_name' => $vanityName,
-                    'error' => $e->getMessage()
-                ]);
-            }
-            return null;
-        }
-    }
-
-    /**
-     * Make API call to Steam endpoints
-     * 
-     * @param string $url URL to call
-     * @param array $params Query parameters
-     * @param bool $isJsonResponse Whether to expect JSON response (default: true)
-     * @return array|null Response data or null on failure
-     */
-    public function makeApiCall(string $url, array $params = [], bool $isJsonResponse = true): ?array
-    {
-        try {
-            $fullUrl = $url . '?' . http_build_query($params);
-            
-            $context = stream_context_create([
-                'http' => [
-                    'timeout' => 15,
-                    'user_agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
-                    'method' => 'GET',
-                    'header' => [
-                        'Accept: application/json, text/plain, */*',
-                        'Accept-Language: en-US,en;q=0.9',
-                        'Cache-Control: no-cache'
-                    ]
-                ]
-            ]);
-            
-            if ($this->logger) {
-                $this->logger->debug('Making API call', [
-                    'url' => $fullUrl,
-                    'expect_json' => $isJsonResponse
-                ]);
-            }
-            
-            $response = file_get_contents($fullUrl, false, $context);
-            
-            if ($response === false) {
-                if ($this->logger) {
-                    $this->logger->warning('API call returned false', [
-                        'url' => $fullUrl,
-                        'http_response_header' => $http_response_header ?? null
-                    ]);
-                }
-                return null;
-            }
-            
-            if ($isJsonResponse) {
-                $data = json_decode($response, true);
-                
-                if (json_last_error() !== JSON_ERROR_NONE) {
-                    if ($this->logger) {
-                        $this->logger->error('JSON decode error', [
-                            'url' => $fullUrl,
-                            'json_error' => json_last_error_msg(),
-                            'response_preview' => substr($response, 0, 200)
-                        ]);
-                    }
-                    return null;
-                }
-                
-                return $data;
-            }
-            
-            return ['raw' => $response];
-            
-        } catch (Exception $e) {
-            if ($this->logger) {
-                $this->logger->error('API call failed', [
-                    'url' => $url,
                     'error' => $e->getMessage()
                 ]);
             }

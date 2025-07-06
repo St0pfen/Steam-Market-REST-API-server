@@ -8,6 +8,7 @@ use Psr\Log\LoggerInterface;
 use Exception;
 use App\Helpers\ConfigHelper;
 use App\Helpers\SocialServiceHelper;
+use App\Helpers\SteamWebApiHelper;
 
 
 /**
@@ -51,7 +52,13 @@ class SteamSocialService
      * @var string|null
      */
     private ?string $apiKey;
-    
+
+    /**
+     * Steam API function from SteamWebApiHelper
+     * @var SteamWebApiHelper
+     */
+    private SteamWebApiHelper $webApi;
+
     /**
      * SteamProfileService constructor
      * 
@@ -62,6 +69,7 @@ class SteamSocialService
         $this->logger = $logger;
         $this->apiKey = ConfigHelper::steam('api_key');
         $this->socialHelper = new SocialServiceHelper($logger);
+        $this->webApi = new SteamWebApiHelper($logger);
         
         if ($this->logger) {
             $this->logger->info('SteamProfileService initialized', [
@@ -120,7 +128,7 @@ class SteamSocialService
                 'steamids' => $steamId
             ];
             
-            $response = $this->socialHelper->makeApiCall($url, $params);
+            $response = $this->webApi->makeApiCall($url, $params);
             
             if (!$response || !isset($response['response']['players'][0])) {
                 return null;
@@ -180,7 +188,7 @@ class SteamSocialService
                 'relationship' => 'friend'
             ];
             
-            $response = $this->socialHelper->makeApiCall($url, $params);
+            $response = $this->webApi->makeApiCall($url, $params);
             
             if (!$response || !isset($response['friendslist']['friends'])) {
                 return null;
@@ -235,7 +243,7 @@ class SteamSocialService
                 'count' => $count
             ];
             
-            $response = $this->socialHelper->makeApiCall($url, $params);
+            $response = $this->webApi->makeApiCall($url, $params);
             
             if (!$response || !isset($response['response']['games'])) {
                 return null;
