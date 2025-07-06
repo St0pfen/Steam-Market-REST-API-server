@@ -30,7 +30,7 @@ class SteamSocialController
      * Optional logger instance for request logging
      * @var LoggerInterface|null
      */
-    private ?LoggerInterface $logger;
+    private ?LoggerInterface $logger = null;
 
     /**
      * Constructor

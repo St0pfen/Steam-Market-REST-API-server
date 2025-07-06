@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Services\SteamInventoryService;
 use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 use Exception;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
@@ -40,7 +41,7 @@ class SteamInventoryController
      * Optional logger instance for debugging and monitoring
      * @var LoggerInterface|null
      */
-    private ?LoggerInterface $logger;
+    private ?LoggerInterface $logger = null;
 
     /**
      * Helper for Steam Web API operations
@@ -53,12 +54,12 @@ class SteamInventoryController
      * @param LoggerInterface|null $logger Optional logger for debugging
      * @param SteamWebApiHelper $webApi Helper for Steam Web API operations
      */
-    public function __construct(?LoggerInterface $logger, SteamWebApiHelper $webApi)
+    public function __construct(?LoggerInterface $logger = null)
     {
-        $this->logger = $logger;
-        $this->webApi = $webApi;
-        $this->inventoryService = new SteamInventoryService($logger, $webApi);
-        $this->socialService = new SteamSocialService($logger, $webApi);
+        $this->logger = $logger ?? new NullLogger();
+        $this->webApi = new SteamWebApiHelper($this->logger);
+        $this->inventoryService = new SteamInventoryService($this->logger, $this->webApi);
+        $this->socialService = new SteamSocialService($this->logger, $this->webApi);
     }
 
     /**
