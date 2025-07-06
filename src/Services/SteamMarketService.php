@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use SteamApi\SteamApi;
+use App\Helpers\LogHelper;
 use Psr\Log\LoggerInterface;
 
 /**
@@ -27,10 +28,10 @@ class SteamMarketService
     
     /**
      * Optional logger instance for API call logging
-     * @var LoggerInterface|null
+     * @var LogHelper|null
      */
-    private ?LoggerInterface $logger;
-    
+    private ?LogHelper $logger;
+
     /**
      * SteamMarketService constructor
      * 
@@ -67,7 +68,7 @@ class SteamMarketService
     public function getItemPrice(string $itemName, int $appId = 730): array
     {
         try {
-            $this->log('info', "Fetching price for item: {$itemName} (App: {$appId})");
+            $this->logger->log('info', "Fetching price for item: {$itemName} (App: {$appId})");
             
             $options = [
                 'market_hash_name' => $itemName,
@@ -104,11 +105,11 @@ class SteamMarketService
                 ];
             }
             
-            $this->log('info', "Successfully fetched price for: {$itemName}");
+            $this->logger->log('info', "Successfully fetched price for: {$itemName}");
             return $result;
             
         } catch (\Exception $e) {
-            $this->log('error', "Error fetching item price: " . $e->getMessage());
+            $this->logger->log('error', "Error fetching item price: " . $e->getMessage());
             return [
                 'error' => $e->getMessage(),
                 'item_name' => $itemName,
@@ -134,8 +135,8 @@ class SteamMarketService
     public function searchItems(string $query, int $appId = 730, int $count = 10): array
     {
         try {
-            $this->log('info', "Searching for items: {$query} (App: {$appId}, Count: {$count})");
-            
+            $this->logger->log('info', "Searching for items: {$query} (App: {$appId}, Count: {$count})");
+
             $options = [
                 'query' => $query,
                 'start' => 0,
@@ -164,9 +165,9 @@ class SteamMarketService
                     ];
                 }
             }
-            
-            $this->log('info', "Found " . count($items) . " items for query: {$query}");
-            
+
+            $this->logger->log('info', "Found " . count($items) . " items for query: {$query}");
+
             return [
                 'items' => $items,
                 'query' => $query,
@@ -177,7 +178,7 @@ class SteamMarketService
             ];
             
         } catch (\Exception $e) {
-            $this->log('error', "Error searching items: " . $e->getMessage());
+            $this->logger->log('error', "Error searching items: " . $e->getMessage());
             return [
                 'error' => $e->getMessage(),
                 'query' => $query,
@@ -201,8 +202,8 @@ class SteamMarketService
     public function getPopularItems(int $appId = 730): array
     {
         try {
-            $this->log('info', "Fetching popular items for app: {$appId}");
-            
+            $this->logger->log('info', "Fetching popular items for app: {$appId}");
+
             // Since the API has no direct "Popular Items" function,
             // we search for popular items with an empty query
             $options = [
@@ -230,9 +231,9 @@ class SteamMarketService
                     ];
                 }
             }
-            
-            $this->log('info', "Found " . count($popularItems) . " popular items");
-            
+
+            $this->logger->log('info', "Found " . count($popularItems) . " popular items");
+
             return [
                 'items' => $popularItems,
                 'app_id' => $appId,
@@ -242,7 +243,7 @@ class SteamMarketService
             ];
             
         } catch (\Exception $e) {
-            $this->log('error', "Error fetching popular items: " . $e->getMessage());
+            $this->logger->log('error', "Error fetching popular items: " . $e->getMessage());
             return [
                 'error' => $e->getMessage(),
                 'app_id' => $appId,
@@ -265,8 +266,8 @@ class SteamMarketService
     public function findAppByName(string $appName): array
     {
         try {
-            $this->log('info', "Searching for app: {$appName}");
-            
+            $this->logger->log('info', "Searching for app: {$appName}");
+
             // Use Steam Store API for app search
             $searchUrl = "https://store.steampowered.com/api/storesearch/?term=" . urlencode($appName) . "&l=english&cc=US";
             
@@ -297,7 +298,7 @@ class SteamMarketService
             ];
             
         } catch (\Exception $e) {
-            $this->log('error', "Error finding app by name: " . $e->getMessage());
+            $this->logger->log('error', "Error finding app by name: " . $e->getMessage());
             return [
                 'error' => $e->getMessage(),
                 'search_term' => $appName,
@@ -320,8 +321,8 @@ class SteamMarketService
     public function getAppDetails(int $appId): array
     {
         try {
-            $this->log('info', "Fetching app details for: {$appId}");
-            
+            $this->logger->log('info', "Fetching app details for: {$appId}");
+
             // Steam Store API for app details
             $detailsUrl = "https://store.steampowered.com/api/appdetails?appids={$appId}&l=english";
             
@@ -356,7 +357,7 @@ class SteamMarketService
             ];
             
         } catch (\Exception $e) {
-            $this->log('error', "Error fetching app details: " . $e->getMessage());
+            $this->logger->log('error', "Error fetching app details: " . $e->getMessage());
             return [
                 'error' => $e->getMessage(),
                 'app_id' => $appId,
@@ -512,7 +513,7 @@ class SteamMarketService
             
             return null;
         } catch (\Exception $e) {
-            $this->log('warning', "Could not fetch item image from market: " . $e->getMessage());
+            $this->logger->log('warning', "Could not fetch item image from market: " . $e->getMessage());
             return null;
         }
     }
@@ -569,22 +570,5 @@ class SteamMarketService
         }
         
         return $current;
-    }
-    
-    /**
-     * Log message using configured logger
-     * 
-     * Safely logs messages through the configured logger instance
-     * if one is available.
-     *
-     * @param string $level Log level (info, warning, error, etc.)
-     * @param string $message Message to log
-     * @return void
-     */
-    private function log(string $level, string $message): void
-    {
-        if ($this->logger) {
-            $this->logger->log($level, $message);
-        }
     }
 }

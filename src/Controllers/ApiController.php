@@ -67,63 +67,81 @@ class ApiController
         if ($request->getUri()->getPort()) {
             $baseUrl .= ':' . $request->getUri()->getPort();
         }
-        
         $apiPrefix = ConfigHelper::app('api_prefix');
-        
         $data = [
             'title' => ConfigHelper::app('name') . ' Documentation',
             'version' => ConfigHelper::app('version'),
             'base_url' => $baseUrl,
             'endpoints' => [
                 'steam' => [
-                    "GET /{$apiPrefix}/steam/status" => [
-                        'description' => 'API status and health check',
-                        'parameters' => []
-                    ],
-                    "GET /{$apiPrefix}/steam/apps" => [
-                        'description' => 'List of all supported Steam apps',
-                        'parameters' => []
-                    ],
-                    "GET /{$apiPrefix}/steam/find-app" => [
-                        'description' => 'Search Steam apps by name',
-                        'parameters' => [
-                            'name' => 'App name to search for (required)'
-                        ],
-                        'example' => "/{$apiPrefix}/steam/find-app?name=Counter-Strike"
-                    ],
-                    "GET /{$apiPrefix}/steam/app/{appId}" => [
-                        'description' => 'Detailed information about a Steam app',
-                        'parameters' => [
-                            'appId' => 'Steam App ID (required)'
-                        ],
-                        'example' => "/{$apiPrefix}/steam/app/730"
-                    ],
-                    "GET /{$apiPrefix}/steam/item/{itemName}" => [
+                    "GET /{$apiPrefix}/steam/market/item/{itemName}" => [
                         'description' => 'Price and details of a specific item',
                         'parameters' => [
                             'itemName' => 'Item name (URL encoded)',
                             'app_id' => 'Steam App ID (optional, default: 730)'
                         ],
-                        'example' => "/{$apiPrefix}/steam/item/AK-47%20%7C%20Redline%20(Field-Tested)?app_id=730"
+                        'example' => "/{$apiPrefix}/steam/market/item/AK-47%20%7C%20Redline%20(Field-Tested)?app_id=730"
                     ],
-                    "GET /{$apiPrefix}/steam/search" => [
+                    "GET /{$apiPrefix}/steam/market/search" => [
                         'description' => 'Search for items',
                         'parameters' => [
                             'q' => 'Search query (required)',
                             'app_id' => 'Steam App ID (optional, default: 730)',
                             'count' => 'Number of results (optional, default: 10, max: 50)'
                         ],
-                        'example' => "/{$apiPrefix}/steam/search?q=AK-47&app_id=730&count=5"
+                        'example' => "/{$apiPrefix}/steam/market/search?q=AK-47&app_id=730&count=5"
                     ],
-                    "GET /{$apiPrefix}/steam/popular" => [
+                    "GET /{$apiPrefix}/steam/market/popular" => [
                         'description' => 'Popular items for an app',
                         'parameters' => [
                             'app_id' => 'Steam App ID (optional, default: 730)'
                         ],
-                        'example' => "/{$apiPrefix}/steam/popular?app_id=730"
+                        'example' => "/{$apiPrefix}/steam/market/popular?app_id=730"
+                    ],
+                    "GET /{$apiPrefix}/steam/market/trending" => [
+                        'description' => 'Trending items for an app',
+                        'parameters' => [
+                            'app_id' => 'Steam App ID (optional, default: 730)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/market/trending?app_id=730"
+                    ],
+                    "GET /{$apiPrefix}/steam/market/categories" => [
+                        'description' => 'List all item categories',
+                        'parameters' => [],
+                        'example' => "/{$apiPrefix}/steam/market/categories"
+                    ],
+                    "GET /{$apiPrefix}/steam/shop/status" => [
+                        'description' => 'API status and health check',
+                        'parameters' => []
+                    ],
+                    "GET /{$apiPrefix}/steam/shop/apps" => [
+                        'description' => 'List of all supported Steam apps',
+                        'parameters' => []
+                    ],
+                    "GET /{$apiPrefix}/steam/shop/find-app" => [
+                        'description' => 'Search Steam apps by name',
+                        'parameters' => [
+                            'name' => 'App name to search for (required)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/shop/find-app?name=Counter-Strike"
+                    ],
+                    "GET /{$apiPrefix}/steam/shop/app/{appId}" => [
+                        'description' => 'Detailed information about a Steam app',
+                        'parameters' => [
+                            'appId' => 'Steam App ID (required)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/shop/app/730"
                     ]
                 ],
                 'profile' => [
+                    "GET /{$apiPrefix}/steam/profile/search" => [
+                        'description' => 'Search Steam profiles by name',
+                        'parameters' => [
+                            'q' => 'Steam profile name (required, min 3 characters)',
+                            'limit' => 'Number of results (optional, default: 10, max: 25)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/profile/search?q=stopfen&limit=5"
+                    ],
                     "GET /{$apiPrefix}/steam/profile/{identifier}" => [
                         'description' => 'Get Steam profile information',
                         'parameters' => [
@@ -131,37 +149,65 @@ class ApiController
                         ],
                         'example' => "/{$apiPrefix}/steam/profile/76561198000000000"
                     ],
-                    "GET /{$apiPrefix}/steam/profile/{identifier}/inventory" => [
+                    "GET /{$apiPrefix}/steam/profile/inventory/{identifier}" => [
                         'description' => 'Get Steam profile inventory',
                         'parameters' => [
                             'identifier' => 'Steam64 ID, custom URL, or profile URL (required)',
                             'app_id' => 'Steam App ID (optional, default: 730)',
                             'context_id' => 'Context ID (optional, default: 2)'
                         ],
-                        'example' => "/{$apiPrefix}/steam/profile/76561198000000000/inventory?app_id=730"
+                        'example' => "/{$apiPrefix}/steam/profile/inventory/76561198000000000?app_id=730"
                     ],
-                    "GET /{$apiPrefix}/steam/profile/{identifier}/friends" => [
+                    "GET /{$apiPrefix}/steam/profile/friends/{identifier}" => [
                         'description' => 'Get Steam profile friend list (requires API key)',
                         'parameters' => [
                             'identifier' => 'Steam64 ID, custom URL, or profile URL (required)'
                         ],
-                        'example' => "/{$apiPrefix}/steam/profile/76561198000000000/friends"
+                        'example' => "/{$apiPrefix}/steam/profile/friends/76561198000000000"
                     ],
-                    "GET /{$apiPrefix}/steam/profile/{identifier}/games/recent" => [
+                    "GET /{$apiPrefix}/steam/profile/games/recent/{identifier}" => [
                         'description' => 'Get recently played games (requires API key)',
                         'parameters' => [
                             'identifier' => 'Steam64 ID, custom URL, or profile URL (required)',
                             'count' => 'Number of games to return (optional, default: 10, max: 50)'
                         ],
-                        'example' => "/{$apiPrefix}/steam/profile/76561198000000000/games/recent?count=5"
+                        'example' => "/{$apiPrefix}/steam/profile/games/recent/76561198000000000?count=5"
                     ],
-                    "GET /{$apiPrefix}/steam/profile/search" => [
-                        'description' => 'Search Steam profiles by name (not implemented)',
+                    "GET /{$apiPrefix}/steam/profile/trade-link/{identifier}" => [
+                        'description' => 'Get trade link for a profile',
                         'parameters' => [
-                            'q' => 'Search query (required, min 3 characters)',
-                            'limit' => 'Number of results (optional, default: 10, max: 25)'
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)'
                         ],
-                        'note' => 'Currently returns 501 - Steam does not provide public profile search API'
+                        'example' => "/{$apiPrefix}/steam/profile/trade-link/76561198000000000"
+                    ],
+                    "GET /{$apiPrefix}/steam/profile/level/{identifier}" => [
+                        'description' => 'Get Steam profile level',
+                        'parameters' => [
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/profile/level/76561198000000000"
+                    ],
+                    "GET /{$apiPrefix}/steam/profile/summary/{identifier}" => [
+                        'description' => 'Get summary information for a Steam profile',
+                        'parameters' => [
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/profile/summary/76561198000000000"
+                    ]
+                ],
+                'tools' => [
+                    "GET /{$apiPrefix}/steam/tools/inventory-value" => [
+                        'description' => 'Calculate total value of a profile inventory',
+                        'parameters' => [
+                            'identifier' => 'Steam64 ID, custom URL, or profile URL (required)',
+                            'app_id' => 'Steam App ID (optional, default: 730)',
+                            'context_id' => 'Context ID (optional, default: 2)'
+                        ],
+                        'example' => "/{$apiPrefix}/steam/tools/inventory-value/76561198000000000?app_id=730"
+                    ],
+                    "GET /{$apiPrefix}/steam/tools/vac-banned-friends" => [
+                        'description' => 'Get friends who are VAC banned (requires API key)',
+                        'parameters' => []
                     ]
                 ]
             ],
@@ -202,7 +248,6 @@ class ApiController
             'success' => true,
             'timestamp' => date('Y-m-d H:i:s')
         ];
-        
         $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', ConfigHelper::app('content_type'));
     }
