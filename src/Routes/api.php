@@ -30,6 +30,13 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
 
     // Steam Market API Endpoints
     $group->group('/steam', function (RouteCollectorProxy $steamGroup) {
+        // Shop Endpoints
+        $steamGroup->group('/shop', function (RouteCollectorProxy $shopGroup) {
+            $shopGroup->get('/status', [SteamController::class, 'getStatus']);
+            $shopGroup->get('/apps', [SteamController::class, 'getAppInfo']);
+            $shopGroup->get('/find-app', [SteamShopController::class, 'findAppByName']);
+            $shopGroup->get('/app/{appId}', [SteamShopController::class, 'getAppDetails']);
+        });
         // Market Endpoints
         $steamGroup->group('/market', function (RouteCollectorProxy $marketGroup) {
 
@@ -38,13 +45,6 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
             $marketGroup->get('/popular', [SteamMarketController::class, 'getPopularItems']);
             $marketGroup->get('/trending', [SteamMarketController::class, 'getTrendingItems']);
             $marketGroup->get('/categories', [SteamMarketController::class, 'getCategories']);
-        });
-        // Shop Endpoints
-        $steamGroup->group('/shop', function (RouteCollectorProxy $shopGroup) {
-            $shopGroup->get('/status', [SteamController::class, 'getStatus']);
-            $shopGroup->get('/apps', [SteamController::class, 'getAppInfo']);
-            $shopGroup->get('/find-app', [SteamShopController::class, 'findAppByName']);
-            $shopGroup->get('/app/{appId}', [SteamShopController::class, 'getAppDetails']);
         });
         // Profile Endpoints
         $steamGroup->group('/profile', function (RouteCollectorProxy $profileGroup) {
@@ -55,14 +55,11 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
             $profileGroup->get('/summary/{identifier}', [SteamSocialController::class, 'getProfileSummary']);
             $profileGroup->get('/games/recent/{identifier}', [SteamSocialController::class, 'getRecentGames']);
             $profileGroup->get('/trade-link/{identifier}', [SteamSocialController::class, 'getTradeLink']);
-            $profileGroup->get('/inventory/{identifier}', [SteamSocialController::class, 'getInventory']);
         });
-        // Tools Endpoints
-        $steamGroup->group('/tools', function (RouteCollectorProxy $toolsGroup) {
-            $toolsGroup->get('/inventory-value', [ToolsController::class, 'getInventoryValue']);
-            $toolsGroup->get('/vac-banned-friends', [ToolsController::class, 'getVacBannedFriends']);
-
-
+        $steamGroup->group('/inventory', function (RouteCollectorProxy $inventoryGroup) {
+            $inventoryGroup->get('/{identifier}', [SteamInventoryController::class, 'getInventory']);
+            $inventoryGroup->get('/value/{identifier}', [SteamInventoryController::class, 'getInventoryValue']);
+            $inventoryGroup->get('/trade-link/{identifier}', [SteamInventoryController::class, 'getTradeLink']);
         });
     });
 });
