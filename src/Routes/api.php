@@ -16,12 +16,10 @@ declare(strict_types=1);
 use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ApiController;
 use App\Controllers\SteamController;
-use App\Controllers\ProfileController;
 use App\Controllers\SteamShopController;
 use App\Controllers\SteamMarketController;
 use App\Controllers\SteamSocialController;
 use App\Controllers\SteamInventoryController;
-use App\Controllers\ToolsController;
 
 // Main API Routes Group - Version 1
 $app->group('/api/v1', function (RouteCollectorProxy $group) {
