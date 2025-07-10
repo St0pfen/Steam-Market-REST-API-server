@@ -46,11 +46,9 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
         });
         // Profile Endpoints
         $steamGroup->group('/profile', function (RouteCollectorProxy $profileGroup) {
-            $profileGroup->get('/search', [SteamSocialController::class, 'searchProfiles']); //todo
             $profileGroup->get('/{identifier}', [SteamSocialController::class, 'getProfile']);
             $profileGroup->get('/friends/{identifier}', [SteamSocialController::class, 'getFriends']);
-            $profileGroup->get('/level/{identifier}', [SteamSocialController::class, 'getProfileLevel']); //todo
-            $profileGroup->get('/summary/{identifier}', [SteamSocialController::class, 'getProfileSummary']); //todo
+            $profileGroup->get('/summary/{identifier}', [SteamSocialController::class, 'getProfile']); //alias for getProfile
             $profileGroup->get('/games/recent/{identifier}', [SteamSocialController::class, 'getRecentGames']);
         });
         $steamGroup->group('/inventory', function (RouteCollectorProxy $inventoryGroup) {

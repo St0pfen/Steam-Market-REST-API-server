@@ -1,4 +1,5 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Helpers;
@@ -6,6 +7,7 @@ namespace App\Helpers;
 
 use SteamApi\SteamApi;
 use Psr\Log\LoggerInterface;
+
 /**
  * SteamImageHelper Class
  * 
@@ -37,14 +39,14 @@ class SteamImageHelper
     public function __construct(?LoggerInterface $logger = null)
     {
         $apiKey = $_ENV['STEAM_API_KEY'] ?? null;
-        
+
         if ($apiKey) {
             $this->steamApi = new SteamApi($apiKey);
         } else {
             // Without API key (limited functionality)
             $this->steamApi = new SteamApi();
         }
-        
+
         $this->logger = $logger;
     }
 
@@ -62,18 +64,18 @@ class SteamImageHelper
         if (empty($iconUrl)) {
             return null;
         }
-        
+
         // Steam CDN base URL
         $baseUrl = 'https://community.cloudflare.steamstatic.com/economy/image/';
-        
+
         // If URL is already complete, return it
         if (str_starts_with($iconUrl, 'http')) {
             return $iconUrl;
         }
-        
+
         return $baseUrl . $iconUrl;
     }
-    
+
     /**
      * Get item image URL from Steam Market using market hash name
      * 
@@ -89,7 +91,7 @@ class SteamImageHelper
         try {
             // Use the Steam Market Listing API to get more details
             $url = "https://steamcommunity.com/market/listings/{$appId}/" . urlencode($marketHashName);
-            
+
             // For now we use the search function as fallback
             $searchOptions = [
                 'query' => $marketHashName,
@@ -104,7 +106,7 @@ class SteamImageHelper
                     return $this->buildImageUrl($item['asset_description']['icon_url']);
                 }
             }
-            
+
             return null;
         } catch (\Exception $e) {
             $this->logger->log('warning', "Could not fetch item image from market: " . $e->getMessage());
@@ -126,18 +128,18 @@ class SteamImageHelper
         // Check various fields where image URLs can be found
         $imageFields = [
             'asset_description.icon_url_large',
-            'asset_description.icon_url', 
+            'asset_description.icon_url',
             'icon_url_large',
             'icon_url'
         ];
-        
+
         foreach ($imageFields as $field) {
             $value = $this->getNestedValue($item, $field);
             if ($value) {
                 return $this->buildImageUrl($value);
             }
         }
-        
+
         return null;
     }
 
@@ -155,14 +157,14 @@ class SteamImageHelper
     {
         $keys = explode('.', $path);
         $current = $array;
-        
+
         foreach ($keys as $key) {
             if (!is_array($current) || !isset($current[$key])) {
                 return null;
             }
             $current = $current[$key];
         }
-        
+
         return $current;
     }
 }

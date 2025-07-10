@@ -124,24 +124,52 @@ class SteamSocialService
             if (!$this->apiKey) {
                 return $this->socialHelper->getProfileFromCommunity($steamId);
             }
-            
-            $url = $this->steamApiUrl . '/ISteamUser/GetPlayerSummaries/v0002/';
-            $params = [
+
+            // Player summaries requires 'steamids' (comma-separated)
+            $paramsSummaries = [
                 'key' => $this->apiKey,
                 'steamids' => $steamId
             ];
-            
-            $response = $this->webApi->makeApiCall($url, $params);
-            
-            if (!$response || !isset($response['response']['players'][0])) {
+            // Player level requires 'steamid' (single ID)
+            $paramsLevel = [
+                'key' => $this->apiKey,
+                'steamid' => $steamId
+            ];
+            // Owned games requires 'steamid' (single ID)
+            $paramsOwnedGames = [
+                'key' => $this->apiKey,
+                'steamid' => $steamId
+            ];
+
+            $urlPlayerSummaries = $this->steamApiUrl . '/ISteamUser/GetPlayerSummaries/v0002/';
+            $urlPlayerLevels = $this->steamApiUrl . '/IPlayerService/GetSteamLevel/v1/';
+            $urlPlayerOwnerGames = $this->steamApiUrl . '/IPlayerService/GetOwnedGames/v1/';
+
+            $responsePlayerSummaries = $this->webApi->makeApiCall($urlPlayerSummaries, $paramsSummaries);
+            $responsePlayerLevels = $this->webApi->makeApiCall($urlPlayerLevels, $paramsLevel);
+            $responsePlayerOwnedGames = $this->webApi->makeApiCall($urlPlayerOwnerGames, $paramsOwnedGames);
+
+            if (!$responsePlayerSummaries || !isset($responsePlayerSummaries['response']['players'][0])) {
                 return null;
             }
-            
-            $player = $response['response']['players'][0];
+            if (!$responsePlayerLevels || !isset($responsePlayerLevels['response']['player_level'])) {
+                $responsePlayerLevels['response']['player_level'] = 0; // Default level if not found
+            }
+
+            if (!$responsePlayerOwnedGames || !isset($responsePlayerOwnedGames['response']['games'])) {
+                $responsePlayerOwnedGames['response']['games'] = []; // Default to empty array if not found
+            }
+
+            $player = $responsePlayerSummaries['response']['players'][0];
+            $player['level'] = $responsePlayerLevels['response']['player_level'];
+            $player['games'] = $responsePlayerOwnedGames['response']['games'];
+
             
             return [
                 'steamid' => $player['steamid'],
                 'personaname' => $player['personaname'] ?? 'Unknown',
+                'level' => $player['level'] ?? 0,
+                'games_count' => count($player['games'] ?? []),
                 'profileurl' => $player['profileurl'] ?? null,
                 'avatar' => $player['avatar'] ?? null,
                 'avatarmedium' => $player['avatarmedium'] ?? null,
@@ -156,7 +184,8 @@ class SteamSocialService
                 'gameid' => $player['gameid'] ?? null,
                 'gameextrainfo' => $player['gameextrainfo'] ?? null,
                 'loccountrycode' => $player['loccountrycode'] ?? null,
-                'locstatecode' => $player['locstatecode'] ?? null
+                'locstatecode' => $player['locstatecode'] ?? null,
+                'all_games' => $player['games'] ?? []
             ];
             
         } catch (Exception $e) {
@@ -283,5 +312,4 @@ class SteamSocialService
             return null;
         }
     }
-    
 }

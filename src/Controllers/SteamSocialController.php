@@ -312,8 +312,4 @@ class SteamSocialController
             return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
     }
-
-    //searchProfiles TODO
-    //getProfileLevel TODO
-    //getProfileSummary TODO
 }
