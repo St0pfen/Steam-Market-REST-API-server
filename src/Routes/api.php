@@ -42,7 +42,6 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
             $marketGroup->get('/item/{itemName}', [SteamMarketController::class, 'getItemPrice']);
             $marketGroup->get('/search', [SteamMarketController::class, 'searchItems']);
             $marketGroup->get('/popular', [SteamMarketController::class, 'getPopularItems']);
-            $marketGroup->get('/categories', [SteamMarketController::class, 'getCategories']); //todo
         });
         // Profile Endpoints
         $steamGroup->group('/profile', function (RouteCollectorProxy $profileGroup) {
@@ -54,7 +53,6 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
         $steamGroup->group('/inventory', function (RouteCollectorProxy $inventoryGroup) {
             $inventoryGroup->get('/{identifier}', [SteamInventoryController::class, 'getInventory']);
             $inventoryGroup->get('/value/{identifier}', [SteamInventoryController::class, 'getInventoryValue']); //todo
-            $inventoryGroup->get('/trade-link/{identifier}', [SteamInventoryController::class, 'getTradeLink']); //todo
         });
     });
 });
