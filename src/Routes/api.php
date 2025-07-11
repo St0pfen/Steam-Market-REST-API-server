@@ -51,9 +51,9 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
             $profileGroup->get('/recent-games/{identifier}', [SteamSocialController::class, 'getRecentGames']);
         });
         $steamGroup->group('/inventory', function (RouteCollectorProxy $inventoryGroup) {
+            $inventoryGroup->get('/highest-value/{identifier}', [SteamInventoryController::class, 'getInventoryHighestValue']); //todo
             $inventoryGroup->get('/cs2/{identifier}', [SteamInventoryController::class, 'getInventory']);
             $inventoryGroup->get('/{appId}/{identifier}', [SteamInventoryController::class, 'getInventory']);
-            $inventoryGroup->get('/highest-value/{identifier}', [SteamInventoryController::class, 'getInventoryHighestValue']); //todo
         });
     });
 });

@@ -1,58 +1,33 @@
 <?php
+
 declare(strict_types=1);
 
 namespace App\Controllers;
 
 use App\Services\SteamInventoryService;
+use App\Services\SteamSocialService;
+use App\Services\SteamMarketService;
 use App\Services\LoggerService;
-use Psr\Log\NullLogger;
-use Exception;
+use App\Helpers\SteamWebApiHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use App\Services\SteamSocialService;
-
-use App\Helpers\SteamWebApiHelper;
 
 /**
- * Steam Inventory Service
+ * SteamInventoryController
  *
- * Handles Steam inventory-related operations including fetching inventory,
- * calculating total value, and generating trade links.
- *
- * @package stopfen/steam-rest-api-php
- * @author @St0pfen
- * @version 1.0.0
+ * Handles Steam inventory-related endpoints: fetch inventory and filter for highest value items.
+ * All comments and names are in English for clarity and maintainability.
  */
 class SteamInventoryController
 {
-    /**
-     * Profile service for resolving Steam IDs and fetching profile data
-     * @var SteamInventoryService
-     */
     private SteamInventoryService $inventoryService;
-
-    /**
-     * Social service for fetching user social data
-     * @var SteamSocialService
-     */
     private SteamSocialService $socialService;
-
-    /**
-     * Optional logger instance for debugging and monitoring
-     * @var LoggerService|null
-     */
-    private ?LoggerService $logger = null;
-
-    /**
-     * Helper for Steam Web API operations
-     * @var SteamWebApiHelper
-     */
+    private SteamMarketService $marketService;
+    private ?LoggerService $logger;
     private SteamWebApiHelper $webApi;
 
     /**
-     * SteamInventoryController constructor
-     * @param LoggerService|null $logger Optional logger for debugging
-     * @param SteamWebApiHelper $webApi Helper for Steam Web API operations
+     * Constructor initializes all required services.
      */
     public function __construct(?LoggerService $logger = null)
     {
@@ -60,151 +35,109 @@ class SteamInventoryController
         $this->webApi = new SteamWebApiHelper($this->logger);
         $this->inventoryService = new SteamInventoryService($this->logger, $this->webApi);
         $this->socialService = new SteamSocialService($this->logger, $this->webApi);
+        $this->marketService = new SteamMarketService($this->logger, $this->webApi);
     }
 
     /**
-     * Get Steam profile inventory
-     * 
-     * GET /api/v1/steam/profile/{identifier}/inventory
-     * Query params: app_id (default: 730), context_id (default: 2)
-     * 
+     * Get Steam profile inventory.
+     *
      * @param Request $request HTTP request
      * @param Response $response HTTP response
      * @param array $args Route arguments
-     * @return Response JSON response with inventory data
+     * @return Response JSON response with inventory data or error
      */
     public function getInventory(Request $request, Response $response, array $args): Response
     {
-        try {
-            $identifier = $args['identifier'] ?? '';
-            // Prefer appId from route args, then query param, then default 730
-            $appId = isset($args['appId']) ? (int)$args['appId'] : (int)($request->getQueryParams()['app_id'] ?? 730);
-            $queryParams = $request->getQueryParams();
-            $contextId = (int)($queryParams['context_id'] ?? 2); // Default to items context
-            
-            if (empty($identifier)) {
-                $data = [
-                    'error' => 'Steam ID or profile identifier is required',
-                    'success' => false,
-                    'timestamp' => date('Y-m-d H:i:s')
-                ];
-                $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
-                return $response->withStatus(400)->withHeader('Content-Type', 'application/json');
-            }
-            
-            // Resolve Steam ID
-            $steamId = $this->socialService->resolveSteamId($identifier);
+        $identifier = $args['identifier'] ?? '';
+        $appId = isset($args['appId']) ? (int)$args['appId'] : (int)($request->getQueryParams()['app_id'] ?? 730);
+        $contextId = isset($args['contextId']) ? (int)$args['contextId'] : (int)($request->getQueryParams()['context_id'] ?? 2);
 
-            if (!$steamId) {
-                $data = [
-                    'error' => 'Steam profile not found',
-                    'identifier' => $identifier,
-                    'success' => false,
-                    'timestamp' => date('Y-m-d H:i:s')
-                ];
-                $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
-                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
-            }
-            
-            // Get inventory data
-            $inventoryData = $this->inventoryService->getInventory($steamId, $appId, $contextId);
-
-            if (!$inventoryData) {
-                // Check profile privacy as this might be the issue
-                $profileData = $this->socialService->getProfile($steamId);
-                $privacyInfo = '';
-                
-                if ($profileData && isset($profileData['communityvisibilitystate'])) {
-                    $visibilityState = $profileData['communityvisibilitystate'];
-                    switch ($visibilityState) {
-                        case 1:
-                            $privacyInfo = ' (Profile is private)';
-                            break;
-                        case 2:
-                            $privacyInfo = ' (Profile is friends only)';
-                            break;
-                        case 3:
-                            $privacyInfo = ' (Profile is public but inventory may be private)';
-                            break;
-                        default:
-                            $privacyInfo = ' (Unknown privacy state)';
-                    }
-                }
-                
-                $data = [
-                    'error' => 'Inventory not accessible' . $privacyInfo,
-                    'details' => [
-                        'steamid' => $steamId,
-                        'appid' => $appId,
-                        'context_id' => $contextId,
-                        'possible_reasons' => [
-                            'Inventory privacy settings',
-                            'No items in this game',
-                            'Invalid app ID or context ID',
-                            'Steam API rate limiting',
-                            'Temporary Steam service issues'
-                        ]
-                    ],
-                    'success' => false,
-                    'timestamp' => date('Y-m-d H:i:s')
-                ];
-                $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-                return $response->withStatus(404)->withHeader('Content-Type', 'application/json');
-            }
-            
-            $responseData = [
-                'inventory' => $inventoryData,
-                'success' => true,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-            
-            if ($this->logger) {
-                $this->logger->info('Inventory retrieved successfully', [
-                    'identifier' => $identifier,
-                    'steamid' => $steamId,
-                    'appid' => $appId,
-                    'item_count' => count($inventoryData['items'] ?? [])
-                ]);
-            }
-            
-            $response->getBody()->write(json_encode($responseData, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            return $response->withHeader('Content-Type', 'application/json');
-            
-        } catch (\Exception $e) {
-            if ($this->logger) {
-                $this->logger->error('Inventory retrieval failed', [
-                    'identifier' => $identifier ?? 'unknown',
-                    'appid' => $appId ?? 'unknown',
-                    'error' => $e->getMessage()
-                ]);
-            }
-            
-            $data = [
-                'error' => 'Internal server error while retrieving inventory',
-                'success' => false,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
-            return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
+        if (empty($identifier)) {
+            return $this->jsonError($response, 'Steam ID or profile identifier is required', 400);
         }
+
+        $steamId = $this->socialService->resolveSteamId($identifier);
+        if (!$steamId) {
+            return $this->jsonError($response, 'Steam profile not found', 404, ['identifier' => $identifier]);
+        }
+
+        $inventoryData = $this->inventoryService->getInventory($steamId, $appId, $contextId);
+        if (!$inventoryData) {
+            return $this->jsonError($response, 'Inventory not accessible or empty', 404);
+        }
+
+        $result = [
+            'inventory' => $inventoryData,
+            'success' => true,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        $response->getBody()->write(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        return $response->withHeader('Content-Type', 'application/json');
     }
+
     /**
-     * Get highest value items in inventory
-     * Filtered by app_id and item rarity
+     * Get highest value (Covert) items in inventory, including market data.
      *
-     * GET /api/v1/steam/profile/{identifier}/inventory/highest-value
-     * Query params: app_id (default: 730), context_id (default: 2)
-     * 
      * @param Request $request HTTP request
      * @param Response $response HTTP response
      * @param array $args Route arguments
-     * @return Response JSON response with total value data
+     * @return Response JSON response with only Covert items and their market data
      */
-#    public function getInventoryHighestValue(Request $request, Response $response, array $args): Response
-#    {
-#        try {
-#            $inventory = $this->getInventory($request, $response, $args);
-#            
-#        }
-#    }
+    public function getInventoryHighestValue(Request $request, Response $response, array $args): Response
+    {
+        $identifier = $args['identifier'] ?? '';
+        $appId = isset($request->getQueryParams()['app_id']) && (int)$request->getQueryParams()['app_id'] > 0
+            ? (int)$request->getQueryParams()['app_id'] : 730;
+        $contextId = isset($request->getQueryParams()['context_id']) ? (int)$request->getQueryParams()['context_id'] : 2;
+
+        if (empty($identifier)) {
+            return $this->jsonError($response, 'Steam ID or profile identifier is required', 400);
+        }
+
+        $steamId = $this->socialService->resolveSteamId($identifier);
+        if (!$steamId) {
+            return $this->jsonError($response, 'Steam profile not found', 404, ['identifier' => $identifier]);
+        }
+
+        $inventoryData = $this->inventoryService->getInventory($steamId, $appId, $contextId);
+        if (!$inventoryData || !isset($inventoryData['items']) || !is_array($inventoryData['items'])) {
+            return $this->jsonError($response, 'Inventory not accessible or empty', 404);
+        }
+
+        $covertItems = [];
+        foreach ($inventoryData['items'] as $item) {
+            if (isset($item['rarity']) && $item['rarity'] === 'Covert') {
+                $item['market_data'] = $this->marketService->getItemPrice($item['market_hash_name'], $appId);
+                $covertItems[] = $item;
+            }
+        }
+
+        $result = [
+            'covert_items' => $covertItems,
+            'success' => true,
+            'timestamp' => date('Y-m-d H:i:s')
+        ];
+        $response->getBody()->write(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        return $response->withHeader('Content-Type', 'application/json');
+    }
+
+    /**
+     * Helper to return a formatted JSON error response.
+     *
+     * @param Response $response
+     * @param string $message
+     * @param int $status
+     * @param array $extra
+     * @return Response
+     */
+    private function jsonError(Response $response, string $message, int $status, array $extra = []): Response
+    {
+        $data = array_merge([
+            'error' => $message,
+            'success' => false,
+            'timestamp' => date('Y-m-d H:i:s')
+        ], $extra);
+        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        return $response->withStatus($status)->withHeader('Content-Type', 'application/json');
+    }
 }
