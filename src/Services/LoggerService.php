@@ -72,8 +72,8 @@ class LoggerService
         
         $generalHandler = new RotatingFileHandler(
             $this->logPath . '/app.log',
-            30, // 30 Tage behalten
-            Logger::INFO
+            30, // Keep 30 days
+            'debug' // Use string to avoid deprecated constant
         );
         
         $generalFormatter = new LineFormatter(
@@ -88,8 +88,8 @@ class LoggerService
         
         $ipHandler = new RotatingFileHandler(
             $this->logPath . '/access.log',
-            30, // 30 Tage behalten
-            Logger::INFO
+            30, // Keep 30 days
+            'debug' // Use string to avoid deprecated constant
         );
         
         $ipFormatter = new LineFormatter(

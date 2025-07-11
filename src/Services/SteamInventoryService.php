@@ -2,7 +2,7 @@
 declare(strict_types=1);
 
 namespace App\Services;
-use Psr\Log\LoggerInterface;
+use App\Services\LoggerService;
 use Exception;
 use App\Helpers\ConfigHelper;
 use App\Helpers\SteamWebApiHelper;
@@ -19,12 +19,19 @@ use App\Helpers\SteamWebApiHelper;
  */
 class SteamInventoryService
 {
-    private LoggerInterface $logger;
+    /**
+     * @var LoggerService
+     */
+    private LoggerService $logger;
+
     private SteamWebApiHelper $webApi;
     private string $steamApiUrl;
     private string $steamCommunityUrl;
 
-    public function __construct(LoggerInterface $logger, SteamWebApiHelper $webApi)
+    /**
+     * @param LoggerService $logger Logger service for inventory logging
+     */
+    public function __construct(LoggerService $logger, SteamWebApiHelper $webApi)
     {
         $this->logger = $logger;
         $this->webApi = $webApi;
@@ -40,7 +47,7 @@ class SteamInventoryService
      * @param int $contextId Context ID (default: 2 for items)
      * @return array|null Inventory data or null if not accessible
      */
-    public function getInventory(string $steamId, int $appId = 730, int $contextId = 2): ?array
+    public function getInventory(string $steamId, int $appId, int $contextId = 2): ?array
     {
         try {
             $url = $this->steamCommunityUrl . "/inventory/{$steamId}/{$appId}/{$contextId}";
@@ -74,6 +81,25 @@ class SteamInventoryService
             $items = [];
             $descriptions = $response['descriptions'] ?? [];
             
+            // Debug: Highlight possible knife items in descriptions
+            if ($this->logger) {
+                foreach ($descriptions as $desc) {
+                    $name = $desc['name'] ?? '';
+                    $type = $desc['type'] ?? '';
+                    if (stripos($name, 'knife') !== false || stripos($name, 'dagger') !== false || strpos($name, '★') !== false || stripos($name, 'stattrak') !== false || stripos($type, 'knife') !== false || stripos($type, 'dagger') !== false) {
+                        $this->logger->info('Potential knife/dagger item found in descriptions', [
+                            'classid' => $desc['classid'] ?? null,
+                            'instanceid' => $desc['instanceid'] ?? null,
+                            'name' => $name,
+                            'type' => $type,
+                            'market_name' => $desc['market_name'] ?? null,
+                            'market_hash_name' => $desc['market_hash_name'] ?? null,
+                            'tags' => $desc['tags'] ?? null
+                        ]);
+                    }
+                }
+            }
+            
             // Create lookup table for descriptions
             $descriptionLookup = [];
             foreach ($descriptions as $desc) {
@@ -85,7 +111,6 @@ class SteamInventoryService
             foreach ($response['assets'] as $asset) {
                 $key = $asset['classid'] . '_' . $asset['instanceid'];
                 $description = $descriptionLookup[$key] ?? null;
-                
                 if ($description) {
                     $items[] = [
                         'assetid' => $asset['assetid'],

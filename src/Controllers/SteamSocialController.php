@@ -4,9 +4,9 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\SteamSocialService;
+use App\Services\LoggerService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Log\LoggerInterface;
 
 /**
  * Steam Profile Controller
@@ -28,16 +28,18 @@ class SteamSocialController
     private SteamSocialService $socialService;
     /**
      * Optional logger instance for request logging
-     * @var LoggerInterface|null
+     * @var LoggerService|null
      */
-    private ?LoggerInterface $logger = null;
+    private ?LoggerService $logger = null;
 
     /**
      * Constructor
      * 
      * Instantiates the SteamSocialService internally.
+     * 
+     * @param LoggerService|null $logger Optional logger for debugging
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
         $this->socialService = new SteamSocialService();
         if ($logger) {

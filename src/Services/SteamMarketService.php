@@ -6,7 +6,7 @@ namespace App\Services;
 use SteamApi\SteamApi;
 use App\Helpers\SteamImageHelper;
 use App\Helpers\LogHelper;
-use Psr\Log\LoggerInterface;
+use App\Services\LoggerService;
 
 /**
  * Steam Market Service
@@ -35,9 +35,9 @@ class SteamMarketService
 
     /**
      * Optional logger instance for API call logging
-     * @var LogHelper|null
+     * @var LoggerService|null
      */
-    private ?LogHelper $logger;
+    private ?LoggerService $logger;
 
     /**
      * SteamMarketService constructor
@@ -45,10 +45,13 @@ class SteamMarketService
      * Initializes the Steam API client with optional API key
      * and sets up logging if provided.
      *
-     * @param LoggerInterface|null $logger Optional logger for API call tracking
+     * @param LoggerService|null $logger Optional logger for API call tracking
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
+        $this->logger = $logger;
+        $this->imageHelper = new SteamImageHelper($logger);
+        
         $apiKey = $_ENV['STEAM_API_KEY'] ?? null;
         
         if ($apiKey) {
@@ -57,9 +60,6 @@ class SteamMarketService
             // Without API key (limited functionality)
             $this->steamApi = new SteamApi();
         }
-        
-        $this->logger = $logger;
-        $this->imageHelper = new SteamImageHelper($logger);
     }
     
     /**
@@ -77,7 +77,7 @@ class SteamMarketService
     {
         try {
             if ($this->logger) {
-                $this->logger->log('info', "Fetching price for item: {$itemName} (App: {$appId})");
+                $this->logger->debug("Fetching price for item: {$itemName} (App ID: {$appId})");
             }
             
             $options = [
@@ -116,13 +116,15 @@ class SteamMarketService
             }
             
             if ($this->logger) {
-                $this->logger->log('info', "Successfully fetched price for: {$itemName}");
+                $this->logger->debug("Successfully fetched price for: {$itemName}", [
+                    'result' => $result
+                ]);
             }
             return $result;
             
         } catch (\Exception $e) {
             if ($this->logger) {
-                $this->logger->log('error', "Error fetching item price: " . $e->getMessage());
+                $this->logger->error("Error fetching item price: " . $e->getMessage());
             }
             return [
                 'error' => $e->getMessage(),
@@ -150,7 +152,7 @@ class SteamMarketService
     {
         try {
             if ($this->logger) {
-                $this->logger->log('info', "Searching for items: {$query} (App: {$appId}, Count: {$count})");
+                $this->logger->info("Searching for items: {$query} (App: {$appId}, Count: {$count})");
             }
 
             $options = [
@@ -183,7 +185,7 @@ class SteamMarketService
             }
 
             if ($this->logger) {
-                $this->logger->log('info', "Found " . count($items) . " items for query: {$query}");
+                $this->logger->debug("Found " . count($items) . " items for query: {$query}");
             }
 
             return [
@@ -197,7 +199,7 @@ class SteamMarketService
             
         } catch (\Exception $e) {
             if ($this->logger) {
-                $this->logger->log('error', "Error searching items: " . $e->getMessage());
+                $this->logger->error("Error searching items: " . $e->getMessage());
             }
             return [
                 'error' => $e->getMessage(),
@@ -223,7 +225,7 @@ class SteamMarketService
     {
         try {
             if ($this->logger) {
-                $this->logger->log('info', "Fetching popular items for app: {$appId}");
+                $this->logger->info("Fetching popular items for app: {$appId}");
             }
 
             // Since the API has no direct "Popular Items" function,
@@ -255,7 +257,7 @@ class SteamMarketService
             }
 
             if ($this->logger) {
-                $this->logger->log('info', "Found " . count($popularItems) . " popular items");
+                $this->logger->debug("Found " . count($popularItems) . " popular items");
             }
 
             return [
@@ -268,7 +270,7 @@ class SteamMarketService
             
         } catch (\Exception $e) {
             if ($this->logger) {
-                $this->logger->log('error', "Error fetching popular items: " . $e->getMessage());
+                $this->logger->error("Error fetching popular items: " . $e->getMessage());
             }
             return [
                 'error' => $e->getMessage(),

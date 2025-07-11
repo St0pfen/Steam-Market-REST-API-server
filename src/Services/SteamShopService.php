@@ -4,7 +4,6 @@ declare(strict_types=1);
 namespace App\Services;
 
 use SteamApi\SteamApi;
-use Psr\Log\LoggerInterface;
 
 /**
  * SteamShopService
@@ -14,11 +13,16 @@ use Psr\Log\LoggerInterface;
  */
 class SteamShopService
 {
- /**
+    /**
      * Steam API client instance
      * @var SteamApi
      */
     private SteamApi $steamApi;
+    
+    /**
+     * @var LoggerService|null
+     */
+    private ?LoggerService $logger;
     
     /**
      * SteamMarketService constructor
@@ -26,10 +30,9 @@ class SteamShopService
      * Initializes the Steam API client with optional API key
      * and sets up logging if provided.
      *
-     * @param LoggerInterface|null $logger Optional logger for API call tracking
+     * @param LoggerService|null $logger Optional logger for API call tracking
      */
-    private ?LoggerInterface $logger;
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
         $apiKey = $_ENV['STEAM_API_KEY'] ?? null;
         

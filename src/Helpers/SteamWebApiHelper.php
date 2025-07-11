@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace App\Helpers;
 
 use App\Helpers\ConfigHelper;
-use Psr\Log\LoggerInterface;
+use App\Services\LoggerService;
 use Exception;
 /**
  * SteamWebApiHelper Class
@@ -19,16 +19,16 @@ class SteamWebApiHelper
 {
     /**
      * Optional logger instance for debugging and monitoring
-     * @var LoggerInterface|null
+     * @var LoggerService|null
      */
-    private ?LoggerInterface $logger;
+    private ?LoggerService $logger;
 
     /**
      * SteamWebApiHelper constructor
      *
-     * @param LoggerInterface|null $logger Optional logger for debugging
+     * @param LoggerService|null $logger Optional logger for debugging
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
         $this->logger = $logger;
     }
@@ -45,7 +45,7 @@ class SteamWebApiHelper
     {
         try {
             $fullUrl = $url . '?' . http_build_query($params);
-            
+
             $context = stream_context_create([
                 'http' => [
                     'timeout' => 15,
@@ -65,7 +65,6 @@ class SteamWebApiHelper
                     'expect_json' => $isJsonResponse
                 ]);
             }
-            
             $response = file_get_contents($fullUrl, false, $context);
             
             if ($response === false) {

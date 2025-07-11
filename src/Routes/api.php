@@ -33,14 +33,14 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
         $steamGroup->group('/shop', function (RouteCollectorProxy $shopGroup) {
             $shopGroup->get('/status', [SteamController::class, 'getStatus']);
             $shopGroup->get('/apps', [SteamController::class, 'getAppInfo']);
-            $shopGroup->get('/find-app', [SteamShopController::class, 'findAppByName']);
+            $shopGroup->get('/find-app/{app-name}', [SteamShopController::class, 'findAppByName']);
             $shopGroup->get('/app/{appId}', [SteamShopController::class, 'getAppDetails']);
         });
         // Market Endpoints
         $steamGroup->group('/market', function (RouteCollectorProxy $marketGroup) {
 
             $marketGroup->get('/item/{itemName}', [SteamMarketController::class, 'getItemPrice']);
-            $marketGroup->get('/search', [SteamMarketController::class, 'searchItems']);
+            $marketGroup->get('/search/{itemName}', [SteamMarketController::class, 'searchItems']);
             $marketGroup->get('/popular', [SteamMarketController::class, 'getPopularItems']);
         });
         // Profile Endpoints
@@ -51,8 +51,9 @@ $app->group('/api/v1', function (RouteCollectorProxy $group) {
             $profileGroup->get('/games/recent/{identifier}', [SteamSocialController::class, 'getRecentGames']);
         });
         $steamGroup->group('/inventory', function (RouteCollectorProxy $inventoryGroup) {
-            $inventoryGroup->get('/{identifier}', [SteamInventoryController::class, 'getInventory']);
-            $inventoryGroup->get('/value/{identifier}', [SteamInventoryController::class, 'getInventoryValue']); //todo
+            $inventoryGroup->get('/cs2/{identifier}', [SteamInventoryController::class, 'getInventory']);
+            $inventoryGroup->get('/{appId}/{identifier}', [SteamInventoryController::class, 'getInventory']);
+            $inventoryGroup->get('/highest-value/{identifier}', [SteamInventoryController::class, 'getInventoryHighestValue']); //todo
         });
     });
 });

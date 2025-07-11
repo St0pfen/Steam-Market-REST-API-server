@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\SteamInventoryService;
-use Psr\Log\LoggerInterface;
+use App\Services\LoggerService;
 use Psr\Log\NullLogger;
 use Exception;
 use Psr\Http\Message\ResponseInterface as Response;
@@ -39,9 +39,9 @@ class SteamInventoryController
 
     /**
      * Optional logger instance for debugging and monitoring
-     * @var LoggerInterface|null
+     * @var LoggerService|null
      */
-    private ?LoggerInterface $logger = null;
+    private ?LoggerService $logger = null;
 
     /**
      * Helper for Steam Web API operations
@@ -51,12 +51,12 @@ class SteamInventoryController
 
     /**
      * SteamInventoryController constructor
-     * @param LoggerInterface|null $logger Optional logger for debugging
+     * @param LoggerService|null $logger Optional logger for debugging
      * @param SteamWebApiHelper $webApi Helper for Steam Web API operations
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
-        $this->logger = $logger ?? new NullLogger();
+        $this->logger = $logger ?? new LoggerService();
         $this->webApi = new SteamWebApiHelper($this->logger);
         $this->inventoryService = new SteamInventoryService($this->logger, $this->webApi);
         $this->socialService = new SteamSocialService($this->logger, $this->webApi);
@@ -77,9 +77,9 @@ class SteamInventoryController
     {
         try {
             $identifier = $args['identifier'] ?? '';
+            // Prefer appId from route args, then query param, then default 730
+            $appId = isset($args['appId']) ? (int)$args['appId'] : (int)($request->getQueryParams()['app_id'] ?? 730);
             $queryParams = $request->getQueryParams();
-            
-            $appId = (int)($queryParams['app_id'] ?? 730); // Default to CS2
             $contextId = (int)($queryParams['context_id'] ?? 2); // Default to items context
             
             if (empty($identifier)) {
@@ -188,9 +188,23 @@ class SteamInventoryController
             return $response->withStatus(500)->withHeader('Content-Type', 'application/json');
         }
     }
-
-    // TODO:
-    //      - getInventoryValue
-    //      - getTradeLink
-
+    /**
+     * Get highest value items in inventory
+     * Filtered by app_id and item rarity
+     *
+     * GET /api/v1/steam/profile/{identifier}/inventory/highest-value
+     * Query params: app_id (default: 730), context_id (default: 2)
+     * 
+     * @param Request $request HTTP request
+     * @param Response $response HTTP response
+     * @param array $args Route arguments
+     * @return Response JSON response with total value data
+     */
+#    public function getInventoryHighestValue(Request $request, Response $response, array $args): Response
+#    {
+#        try {
+#            $inventory = $this->getInventory($request, $response, $args);
+#            
+#        }
+#    }
 }

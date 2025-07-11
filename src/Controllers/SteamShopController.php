@@ -3,10 +3,10 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 
+use App\Services\LoggerService;
 use App\Services\SteamShopService as SteamShopService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Log\LoggerInterface;
 
 /**
  * SteamShopController
@@ -22,22 +22,21 @@ class SteamShopController
     private SteamShopService $steamShopService;
     /**
      * Optional logger instance for request logging
-     * @var LoggerInterface|null
+     * @var LoggerService|null
      */
-    private ?LoggerInterface $logger;
+    private ?LoggerService $logger;
 
     /**
      * Constructor
      * 
      * Initializes the SteamShopService and optional logger.
      *
-     * @param SteamShopService $steamService The service for handling Steam shop operations
-     * @param LoggerInterface|null $logger Optional logger for request logging
+     * @param LoggerService|null $logger Optional logger for request logging
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
-        $this->logger = $logger;
-        $this->steamShopService = new SteamShopService($logger);
+        $this->logger = $logger ?? new LoggerService();
+        $this->steamShopService = new SteamShopService($this->logger);
     }
 
     /**
@@ -52,12 +51,10 @@ class SteamShopController
      * 
      * @route GET /api/v1/steam/find-app
      */
-    public function findAppByName(Request $request, Response $response): Response
+    public function findAppByName(Request $request, Response $response, array $args): Response
     {
-        $queryParams = $request->getQueryParams();
-        // Query parameters are automatically decoded
-        $appName = $queryParams['name'] ?? '';
-        
+        $appName = urldecode($args['app-name'] ?? '');
+
         if (empty($appName)) {
             $data = ['error' => 'App name is required', 'success' => false];
             $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));

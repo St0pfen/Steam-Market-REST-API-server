@@ -3,9 +3,9 @@ declare(strict_types=1);
 
 namespace App\Controllers;
 use App\Services\SteamMarketService;
+use App\Services\LoggerService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
-use Psr\Log\LoggerInterface;
 
 /**
  * Steam Market Controller
@@ -15,6 +15,12 @@ use Psr\Log\LoggerInterface;
 class SteamMarketController
 {
     /**
+     * Logger service instance for logging
+     * @var LoggerService
+     */
+    private LoggerService $logger;
+
+    /**
      * Steam Market service instance for API calls
      * @var SteamMarketService
      */
@@ -23,11 +29,12 @@ class SteamMarketController
     /**
      * SteamMarketController constructor
      *
-     * Instantiates the SteamMarketService internally.
+     * Instantiates the SteamMarketService and LoggerService internally.
      */
-    public function __construct()
+    public function __construct(?LoggerService $logger = null)
     {
-        $this->steamMarketService = new SteamMarketService();
+        $this->logger = $logger ?? new LoggerService();
+        $this->steamMarketService = new SteamMarketService($this->logger);
     }
 
     /**
@@ -76,17 +83,17 @@ class SteamMarketController
      * 
      * @route GET /api/v1/steam/search
      */
-    public function searchItems(Request $request, Response $response): Response
+    public function searchItems(Request $request, Response $response, array $args): Response
     {
         $queryParams = $request->getQueryParams();
-        $query = $queryParams['q'] ?? '';
+        $itemName = urldecode($args['itemName'] ?? '');
         $appId = (int)($queryParams['app_id'] ?? 730);
         $count = min((int)($queryParams['count'] ?? 10), 50); // Max 50 items
-        
-        if (empty($query)) {
+
+        if (empty($itemName)) {
             $data = [
-                'error' => 'Search query parameter "q" is required',
-                'example' => '/api/v1/steam/search?q=AK-47&app_id=730&count=10',
+                'error' => 'Search query parameter "itemName" is required',
+                'example' => '/api/v1/steam/search?itemName=AK-47&app_id=730&count=10',
                 'success' => false,
                 'timestamp' => date('Y-m-d H:i:s')
             ];
@@ -94,7 +101,7 @@ class SteamMarketController
             return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
         }
 
-        $data = $this->steamMarketService->searchItems($query, $appId, $count);
+        $data = $this->steamMarketService->searchItems($itemName, $appId, $count);
 
         $statusCode = $data['success'] ? 200 : 500;
         $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));

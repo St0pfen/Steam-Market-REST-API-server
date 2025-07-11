@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Helpers;
 
 use Exception;
-use Psr\Log\LoggerInterface;
+use App\Services\LoggerService;
 use App\Helpers\SteamWebApiHelper;
 use App\Helpers\ConfigHelper;
 use PSpell\Config;
@@ -23,9 +23,9 @@ class SocialServiceHelper
 {
     /**
      * Optional logger instance for debugging and monitoring
-     * @var LoggerInterface|null
+     * @var LoggerService|null
      */
-    private ?LoggerInterface $logger;
+    private ?LoggerService $logger;
 
     /**
      * Helper for social service operations
@@ -54,9 +54,9 @@ class SocialServiceHelper
     /**
      * SocialServiceHelper constructor
      * 
-     * @param LoggerInterface|null $logger Optional logger for debugging
+     * @param LoggerService|null $logger Optional logger for debugging
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
         $this->steamApiUrl = ConfigHelper::steam('api_url');
         $this->steamCommunityUrl = ConfigHelper::steam('community_url');

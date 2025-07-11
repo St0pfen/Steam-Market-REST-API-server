@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 
 use App\Services\SteamMarketService;
-use App\Helpers\LogHelper;
+use App\Services\LoggerService;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -29,9 +29,9 @@ class SteamController
     
     /**
      * Optional logger instance for request logging
-     * @var LogHelper|null
+     * @var LoggerService|null
      */
-    private ?LogHelper $logger;
+    private ?LoggerService $logger;
     
     /**
      * SteamController constructor
@@ -39,12 +39,12 @@ class SteamController
      * Initializes the controller with optional logger and creates
      * a new instance of SteamMarketService for handling API calls.
      *
-     * @param LogHelper|null $logger Optional logger instance for request logging
+     * @param LoggerService|null $logger Optional logger instance for request logging
      */
-    public function __construct(?LogHelper $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
-        $this->steamService = new SteamMarketService($logger);
-        $this->logger = $logger;
+        $this->logger = $logger ?? new LoggerService();
+        $this->steamService = new SteamMarketService($this->logger);
     }
     
     

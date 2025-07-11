@@ -4,7 +4,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 
-use Psr\Log\LoggerInterface;
+use App\Services\LoggerService;
 use Exception;
 use App\Helpers\ConfigHelper;
 use App\Helpers\SocialServiceHelper;
@@ -26,9 +26,9 @@ class SteamSocialService
 {
     /**
      * Optional logger instance for debugging and monitoring
-     * @var LoggerInterface|null
+     * @var LoggerService|null
      */
-    private ?LoggerInterface $logger;
+    private ?LoggerService $logger;
 
     /**
      * Helper for social service operations
@@ -58,9 +58,9 @@ class SteamSocialService
     /**
      * SteamProfileService constructor
      * 
-     * @param LoggerInterface|null $logger Optional logger for debugging
+     * @param LoggerService|null $logger Optional logger for debugging
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
         $apiUrl = ConfigHelper::steam('api_url');
         $communityUrl = ConfigHelper::steam('community_url');
@@ -73,10 +73,9 @@ class SteamSocialService
         $this->logger = $logger;
         $this->socialHelper = new SocialServiceHelper($logger);
         $this->webApi = new SteamWebApiHelper($logger);
-
         if ($this->logger) {
             $this->logger->info('SteamProfileService initialized', [
-                'has_api_key' => !empty($this->apiKey)
+                'timestamp' => date('Y-m-d H:i:s')
             ]);
         }
     }

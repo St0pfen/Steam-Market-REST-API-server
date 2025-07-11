@@ -6,7 +6,7 @@ namespace App\Helpers;
 
 
 use SteamApi\SteamApi;
-use Psr\Log\LoggerInterface;
+use App\Services\LoggerService;
 
 /**
  * SteamImageHelper Class
@@ -29,14 +29,14 @@ class SteamImageHelper
     /**
      * Optional logger instance for debugging and monitoring
      * 
-     * @var LoggerInterface|null
+     * @var LoggerService|null
      */
-    private ?LoggerInterface $logger;
+    private ?LoggerService $logger;
 
     /**
      * Constructor for SteamImageHelper
      */
-    public function __construct(?LoggerInterface $logger = null)
+    public function __construct(?LoggerService $logger = null)
     {
         $apiKey = $_ENV['STEAM_API_KEY'] ?? null;
 
