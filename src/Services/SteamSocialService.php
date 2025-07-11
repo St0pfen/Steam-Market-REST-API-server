@@ -182,9 +182,9 @@ class SteamSocialService
                 'timecreated' => isset($player['timecreated']) ? date('Y-m-d H:i:s', $player['timecreated']) : null,
                 'gameid' => $player['gameid'] ?? null,
                 'gameextrainfo' => $player['gameextrainfo'] ?? null,
-                'loccountrycode' => $player['loccountrycode'] ?? null,
-                'locstatecode' => $player['locstatecode'] ?? null,
-                'all_games' => $player['games'] ?? []
+                'loccountrycode' => $player['loccountrycode'] ?? null
+                #'locstatecode' => $player['locstatecode'] ?? null,
+                #'all_games' => $player['games'] ?? []
             ];
             
         } catch (Exception $e) {

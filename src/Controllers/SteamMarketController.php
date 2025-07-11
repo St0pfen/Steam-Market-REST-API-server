@@ -131,8 +131,4 @@ class SteamMarketController
         $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
         return $response->withHeader('Content-Type', 'application/json')->withStatus($statusCode);
     }
-
-
-    //getCategories
-    //@TODO FIRST IMPLEMENT OTHER CONTROLLERS AND SERVICES
 }

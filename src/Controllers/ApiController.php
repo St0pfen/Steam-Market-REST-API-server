@@ -20,6 +20,15 @@ use App\Helpers\ConfigHelper;
 class ApiController
 {
     /**
+     * Helper to write a JSON response
+     */
+    private function jsonResponse(Response $response, array $data): Response
+    {
+        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
+        return $response->withHeader('Content-Type', ConfigHelper::app('content_type'));
+    }
+
+    /**
      * Basic API test endpoint
      * 
      * Provides a simple health check and basic API information.
@@ -43,9 +52,7 @@ class ApiController
             'timestamp' => date('Y-m-d H:i:s'),
             'success' => true
         ];
-        
-        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        return $response->withHeader('Content-Type', ConfigHelper::app('content_type'));
+        return $this->jsonResponse($response, $data);
     }
     
     /**
@@ -63,10 +70,8 @@ class ApiController
      */
     public function getDocs(Request $request, Response $response): Response
     {
-        $baseUrl = $request->getUri()->getScheme() . '://' . $request->getUri()->getHost();
-        if ($request->getUri()->getPort()) {
-            $baseUrl .= ':' . $request->getUri()->getPort();
-        }
+        $uri = $request->getUri();
+        $baseUrl = $uri->getScheme() . '://' . $uri->getHost() . ($uri->getPort() ? ':' . $uri->getPort() : '');
         $apiPrefix = ConfigHelper::app('api_prefix');
         $data = [
             'title' => ConfigHelper::app('name') . ' Documentation',
@@ -248,7 +253,6 @@ class ApiController
             'success' => true,
             'timestamp' => date('Y-m-d H:i:s')
         ];
-        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        return $response->withHeader('Content-Type', ConfigHelper::app('content_type'));
+        return $this->jsonResponse($response, $data);
     }
 }

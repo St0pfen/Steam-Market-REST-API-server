@@ -212,54 +212,32 @@ class SteamMarketService
     }
     
     /**
-     * Get popular Steam Market items for an application
-     * 
-     * Retrieves trending and popular items from the Steam Market
-     * for the specified application ID.
+     * Get popular Steam Market items for an application.
      *
-     * @param int $appId Steam application ID (default: 730 for CS:GO)
+     * @param int $appId Steam application ID (default: 730 for CS2)
      * @return array Popular items array with metadata and success status
-     * @throws \Exception When API call fails or returns invalid data
      */
     public function getPopularItems(int $appId = 730): array
     {
         try {
-            if ($this->logger) {
-                $this->logger->info("Fetching popular items for app: {$appId}");
-            }
-
-            // Since the API has no direct "Popular Items" function,
-            // we search for popular items with an empty query
+            $this->logger?->info("Fetching popular items for app: {$appId}");
             $options = [
                 'query' => '',
                 'start' => 0,
                 'count' => 20,
                 'search_descriptions' => false
             ];
-            
             $response = $this->steamApi->detailed()->searchItems($appId, $options);
-            
-            $popularItems = [];
-            if ($response && isset($response['response']) && isset($response['response']['results'])) {
-                foreach ($response['response']['results'] as $item) {
-                    // Extract image URL from item data
-                    $imageUrl = $this->imageHelper->extractImageFromItem($item);
-
-                    $popularItems[] = [
-                        'name' => $item['name'] ?? 'Unknown',
-                        'hash_name' => $item['hash_name'] ?? '',
-                        'sell_price' => $item['sell_price'] ?? null,
-                        'sell_price_text' => $item['sell_price_text'] ?? '',
-                        'image_url' => $imageUrl,
-                        'app_id' => $appId
-                    ];
-                }
-            }
-
-            if ($this->logger) {
-                $this->logger->debug("Found " . count($popularItems) . " popular items");
-            }
-
+            $results = $response['response']['results'] ?? [];
+            $popularItems = array_map(fn($item) => [
+                'name' => $item['name'] ?? 'Unknown',
+                'hash_name' => $item['hash_name'] ?? '',
+                'sell_price' => $item['sell_price'] ?? null,
+                'sell_price_text' => $item['sell_price_text'] ?? '',
+                'image_url' => $this->imageHelper->extractImageFromItem($item),
+                'app_id' => $appId
+            ], $results);
+            $this->logger?->debug("Found " . count($popularItems) . " popular items");
             return [
                 'items' => $popularItems,
                 'app_id' => $appId,
@@ -267,11 +245,8 @@ class SteamMarketService
                 'success' => true,
                 'timestamp' => date('Y-m-d H:i:s')
             ];
-            
         } catch (\Exception $e) {
-            if ($this->logger) {
-                $this->logger->error("Error fetching popular items: " . $e->getMessage());
-            }
+            $this->logger?->error("Error fetching popular items: " . $e->getMessage());
             return [
                 'error' => $e->getMessage(),
                 'app_id' => $appId,
@@ -279,18 +254,5 @@ class SteamMarketService
                 'timestamp' => date('Y-m-d H:i:s')
             ];
         }
-    }
-
-    /**
-     * Build full Steam Community image URL from icon fragment
-     * 
-     * Constructs a complete image URL using Steam Community CDN
-     * from a partial icon URL path.
-     *
-     * @param string|null $iconUrl Partial icon URL or null
-     * @return string|null Complete Steam Community image URL or null
-     */
-
-    
-
+    }    
 }

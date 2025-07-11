@@ -39,110 +39,68 @@ class SteamInventoryService
         $this->steamCommunityUrl = ConfigHelper::steam('community_url');
     }
 
-        /**
-     * Get user's Steam inventory for a specific app
-     * 
+    /**
+     * Fetches the user's Steam inventory for a specific app and context(s).
+     *
      * @param string $steamId Steam64 ID
      * @param int $appId Steam App ID (default: 730 for CS2)
-     * @param int $contextId Context ID (default: 2 for items)
+     * @param int|array $contextId Context ID(s) (default: 2 for items, can be array)
      * @return array|null Inventory data or null if not accessible
      */
-    public function getInventory(string $steamId, int $appId, int $contextId = 2): ?array
+    public function getInventory(string $steamId, int $appId, $contextId = 2): ?array
     {
         try {
-            $url = $this->steamCommunityUrl . "/inventory/{$steamId}/{$appId}/{$contextId}";
-            $params = [
-                'l' => 'english',
-                'count' => '75'  // Steam's default limit
-            ];
-            
-            $response = $this->webApi->makeApiCall($url, $params, true); // Changed to true for JSON response
-            
-            if (!$response) {
-                if ($this->logger) {
-                    $this->logger->warning('Inventory API call failed', [
-                        'steamid' => $steamId,
-                        'appid' => $appId,
-                        'url' => $url
-                    ]);
-                }
-                return null;
-            }
-            
-            // Check for specific error responses
-            if (isset($response['success']) && $response['success'] === false) {
-                return null;
-            }
-            
-            if (!isset($response['assets']) || !isset($response['descriptions'])) {
-                return null;
-            }
-            
+            $contexts = (array)$contextId;
             $items = [];
-            $descriptions = $response['descriptions'] ?? [];
-            
-            // Debug: Highlight possible knife items in descriptions
-            if ($this->logger) {
-                foreach ($descriptions as $desc) {
-                    $name = $desc['name'] ?? '';
-                    $type = $desc['type'] ?? '';
-                    if (stripos($name, 'knife') !== false || stripos($name, 'dagger') !== false || strpos($name, '★') !== false || stripos($name, 'stattrak') !== false || stripos($type, 'knife') !== false || stripos($type, 'dagger') !== false) {
-                        $this->logger->info('Potential knife/dagger item found in descriptions', [
-                            'classid' => $desc['classid'] ?? null,
-                            'instanceid' => $desc['instanceid'] ?? null,
-                            'name' => $name,
-                            'type' => $type,
-                            'market_name' => $desc['market_name'] ?? null,
-                            'market_hash_name' => $desc['market_hash_name'] ?? null,
-                            'tags' => $desc['tags'] ?? null
-                        ]);
-                    }
+            foreach ($contexts as $ctxId) {
+                $assets = $descriptions = [];
+                $startAssetId = null;
+                do {
+                    $params = $startAssetId ? ['start_assetid' => $startAssetId] : [];
+                    $url = $this->steamCommunityUrl . "/inventory/{$steamId}/{$appId}/{$ctxId}";
+                    $res = $this->webApi->makeApiCall($url, $params, true);
+                    if (!($res['assets'] ?? null) || !($res['descriptions'] ?? null)) break;
+                    $assets = array_merge($assets, $res['assets']);
+                    $descriptions = array_merge($descriptions, $res['descriptions']);
+                    $startAssetId = $res['last_assetid'] ?? null;
+                } while ($startAssetId);
+                // Build lookup for descriptions
+                $descMap = [];
+                foreach ($descriptions as $d) {
+                    $descMap[(string)$d['classid'].'_'.(string)$d['instanceid']] = $d;
                 }
-            }
-            
-            // Create lookup table for descriptions
-            $descriptionLookup = [];
-            foreach ($descriptions as $desc) {
-                $key = $desc['classid'] . '_' . $desc['instanceid'];
-                $descriptionLookup[$key] = $desc;
-            }
-            
-            // Process inventory items
-            foreach ($response['assets'] as $asset) {
-                $key = $asset['classid'] . '_' . $asset['instanceid'];
-                $description = $descriptionLookup[$key] ?? null;
-                if ($description) {
+                // Map assets to items
+                foreach ($assets as $a) {
+                    $key = (string)$a['classid'].'_'.(string)$a['instanceid'];
+                    if (!isset($descMap[$key])) continue;
+                    $d = $descMap[$key];
                     $items[] = [
-                        'assetid' => $asset['assetid'],
-                        'classid' => $asset['classid'],
-                        'instanceid' => $asset['instanceid'],
-                        'amount' => $asset['amount'],
-                        'name' => $description['name'] ?? 'Unknown Item',
-                        'market_name' => $description['market_name'] ?? null,
-                        'market_hash_name' => $description['market_hash_name'] ?? null,
-                        'tradable' => $description['tradable'] ?? 0,
-                        'marketable' => $description['marketable'] ?? 0,
-                        'commodity' => $description['commodity'] ?? 0,
-                        'type' => $description['type'] ?? null,
-                        'icon_url' => isset($description['icon_url']) ? 
-                            'https://community.cloudflare.steamstatic.com/economy/image/' . $description['icon_url'] : null,
-                        'icon_url_large' => isset($description['icon_url_large']) ? 
-                            'https://community.cloudflare.steamstatic.com/economy/image/' . $description['icon_url_large'] : null,
-                        'exterior' => $this->extractExterior($description['name'] ?? ''),
-                        'rarity' => $this->extractRarity($description['tags'] ?? [])
+                        'assetid' => $a['assetid'],
+                        'classid' => $a['classid'],
+                        'instanceid' => $a['instanceid'],
+                        'amount' => $a['amount'],
+                        'name' => $d['name'] ?? 'Unknown Item',
+                        'market_name' => $d['market_name'] ?? null,
+                        'market_hash_name' => $d['market_hash_name'] ?? null,
+                        'tradable' => $d['tradable'] ?? 0,
+                        'marketable' => $d['marketable'] ?? 0,
+                        'commodity' => $d['commodity'] ?? 0,
+                        'type' => $d['type'] ?? null,
+                        'icon_url' => isset($d['icon_url']) ? 'https://community.cloudflare.steamstatic.com/economy/image/' . $d['icon_url'] : null,
+                        'icon_url_large' => isset($d['icon_url_large']) ? 'https://community.cloudflare.steamstatic.com/economy/image/' . $d['icon_url_large'] : null,
+                        'exterior' => $this->extractExterior($d['name'] ?? ''),
+                        'rarity' => $this->extractRarity($d['tags'] ?? [])
                     ];
                 }
             }
-            
             return [
                 'steamid' => $steamId,
                 'appid' => $appId,
                 'contextid' => $contextId,
-                'total_inventory_count' => $response['total_inventory_count'] ?? count($items),
+                'total_inventory_count' => count($items),
                 'items' => $items,
                 'success' => true
             ];
-            
         } catch (Exception $e) {
             if ($this->logger) {
                 $this->logger->error('Failed to get inventory', [
