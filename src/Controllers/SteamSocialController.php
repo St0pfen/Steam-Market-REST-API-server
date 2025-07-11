@@ -28,7 +28,7 @@ class SteamSocialController
     public function __construct(?LoggerService $logger = null)
     {
         $this->logger = $logger ?? new LoggerService();
-        $this->socialService = new SteamSocialService();
+        $this->socialService = new SteamSocialService($this->logger);
     }
 
     private function jsonError(Response $response, \Throwable $e): Response
