@@ -36,7 +36,7 @@ class SteamInventoryController
         $this->logger = $logger ?? new LoggerService();
         $this->webApi = new SteamWebApiHelper($this->logger);
         $this->inventoryService = new SteamInventoryService($this->logger, $this->webApi);
-        $this->socialService = new SteamSocialService($this->logger, $this->webApi);
+        $this->socialService = new SteamSocialService($this->logger);
         $this->marketService = new SteamMarketService($this->logger, $this->webApi);
     }
 
