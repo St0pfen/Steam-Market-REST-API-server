@@ -37,7 +37,7 @@ class SteamInventoryController
         $this->webApi = new SteamWebApiHelper($this->logger);
         $this->inventoryService = new SteamInventoryService($this->logger, $this->webApi);
         $this->socialService = new SteamSocialService($this->logger);
-        $this->marketService = new SteamMarketService($this->logger, $this->webApi);
+        $this->marketService = new SteamMarketService($this->logger);
     }
 
     private function jsonError(Response $response, \Throwable $e): Response
