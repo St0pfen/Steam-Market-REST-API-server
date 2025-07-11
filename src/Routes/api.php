@@ -7,7 +7,7 @@
  * Uses Slim Framework route groups for organization.
  *
  * @package stopfen/steam-rest-api-php
- * @author Stopfen
+ * @author @St0pfen
  * @version 1.0.0
  */
 
@@ -16,41 +16,44 @@ declare(strict_types=1);
 use Slim\Routing\RouteCollectorProxy;
 use App\Controllers\ApiController;
 use App\Controllers\SteamController;
-use App\Controllers\ProfileController;
+use App\Controllers\SteamShopController;
+use App\Controllers\SteamMarketController;
+use App\Controllers\SteamSocialController;
+use App\Controllers\SteamInventoryController;
 
 // Main API Routes Group - Version 1
 $app->group('/api/v1', function (RouteCollectorProxy $group) {
-    
     // General API Endpoints
     $group->get('/test', [ApiController::class, 'test']);
     $group->get('/docs', [ApiController::class, 'getDocs']);
-    
+
     // Steam Market API Endpoints
     $group->group('/steam', function (RouteCollectorProxy $steamGroup) {
-        
-        // Status and Information Endpoints
-        $steamGroup->get('/status', [SteamController::class, 'getStatus']);
-        $steamGroup->get('/apps', [SteamController::class, 'getAppInfo']);
-        
-        // Dynamic App Search Endpoints
-        $steamGroup->get('/find-app', [SteamController::class, 'findAppByName']);
-        $steamGroup->get('/app/{appId}', [SteamController::class, 'getAppDetails']);
-        
-        // Steam Market Data Endpoints
-        $steamGroup->get('/item/{itemName}', [SteamController::class, 'getItemPrice']);
-        $steamGroup->get('/search', [SteamController::class, 'searchItems']);
-        $steamGroup->get('/popular', [SteamController::class, 'getPopularItems']);
-        
-        // Steam Profile Endpoints
+        // Shop Endpoints
+        $steamGroup->group('/shop', function (RouteCollectorProxy $shopGroup) {
+            $shopGroup->get('/status', [SteamController::class, 'getStatus']);
+            $shopGroup->get('/apps', [SteamController::class, 'getAppInfo']);
+            $shopGroup->get('/find-app/{app-name}', [SteamShopController::class, 'findAppByName']);
+            $shopGroup->get('/app/{appId}', [SteamShopController::class, 'getAppDetails']);
+        });
+        // Market Endpoints
+        $steamGroup->group('/market', function (RouteCollectorProxy $marketGroup) {
+
+            $marketGroup->get('/item/{itemName}', [SteamMarketController::class, 'getItemPrice']);
+            $marketGroup->get('/search/{itemName}', [SteamMarketController::class, 'searchItems']);
+            $marketGroup->get('/popular', [SteamMarketController::class, 'getPopularItems']);
+        });
+        // Profile Endpoints
         $steamGroup->group('/profile', function (RouteCollectorProxy $profileGroup) {
-            // Profile search
-            $profileGroup->get('/search', [ProfileController::class, 'searchProfiles']);
-            
-            // Individual profile endpoints
-            $profileGroup->get('/{identifier}', [ProfileController::class, 'getProfile']);
-            $profileGroup->get('/{identifier}/inventory', [ProfileController::class, 'getInventory']);
-            $profileGroup->get('/{identifier}/friends', [ProfileController::class, 'getFriends']);
-            $profileGroup->get('/{identifier}/games/recent', [ProfileController::class, 'getRecentGames']);
+            $profileGroup->get('/{identifier}', [SteamSocialController::class, 'getProfile']);
+            $profileGroup->get('/friends/{identifier}', [SteamSocialController::class, 'getFriends']);
+            $profileGroup->get('/summary/{identifier}', [SteamSocialController::class, 'getProfile']); //alias for getProfile
+            $profileGroup->get('/recent-games/{identifier}', [SteamSocialController::class, 'getRecentGames']);
+        });
+        $steamGroup->group('/inventory', function (RouteCollectorProxy $inventoryGroup) {
+            $inventoryGroup->get('/highest-value/{identifier}', [SteamInventoryController::class, 'getInventoryHighestValue']); //todo
+            $inventoryGroup->get('/cs2/{identifier}', [SteamInventoryController::class, 'getInventory']);
+            $inventoryGroup->get('/{appId}/{identifier}', [SteamInventoryController::class, 'getInventory']);
         });
     });
 });

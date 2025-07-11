@@ -16,7 +16,7 @@ use Monolog\Formatter\LineFormatter;
  * with automatic log rotation and formatting.
  *
  * @package stopfen/steam-rest-api-php
- * @author Stopfen
+ * @author @St0pfen
  * @version 1.0.0
  */
 class LoggerService
@@ -72,8 +72,8 @@ class LoggerService
         
         $generalHandler = new RotatingFileHandler(
             $this->logPath . '/app.log',
-            30, // 30 Tage behalten
-            Logger::INFO
+            30, // Keep 30 days
+            'debug' // Use string to avoid deprecated constant
         );
         
         $generalFormatter = new LineFormatter(
@@ -88,8 +88,8 @@ class LoggerService
         
         $ipHandler = new RotatingFileHandler(
             $this->logPath . '/access.log',
-            30, // 30 Tage behalten
-            Logger::INFO
+            30, // Keep 30 days
+            'debug' // Use string to avoid deprecated constant
         );
         
         $ipFormatter = new LineFormatter(

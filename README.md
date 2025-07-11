@@ -103,55 +103,62 @@ Some Steam Profile endpoints require a Steam Web API key:
 2. **Add it to your `.env`** file as `STEAM_API_KEY=your_key_here`
 
 ## 📡 API Endpoints
-[📖Detailed endpoints📖](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki/API-Reference)
-### Base Endpoints
-- `GET /` - API Info
+
+### Shop Endpoints
+- `GET /api/v1/steam/shop/status` - API Status
+- `GET /api/v1/steam/shop/apps` - Supported Steam Apps
+- `GET /api/v1/steam/shop/find-app/{app-name}` - Search app by name
+- `GET /api/v1/steam/shop/app/{appId}` - Get app details
+
+### Market Endpoints
+- `GET /api/v1/steam/market/item/{itemName}` - Get item price
+- `GET /api/v1/steam/market/search/{itemName}` - Search items
+- `GET /api/v1/steam/market/popular` - Popular items
+
+### Profile Endpoints
+- `GET /api/v1/steam/profile/{identifier}` - Get Steam profile info
+- `GET /api/v1/steam/profile/summary/{identifier}` - Get Steam profile info (alias)
+- `GET /api/v1/steam/profile/friends/{identifier}` - Get friends list (requires API key)
+- `GET /api/v1/steam/profile/recent-games/{identifier}` - Get recently played games (requires API key)
+
+### Inventory Endpoints
+- `GET /api/v1/steam/inventory/highest-value/{identifier}` - Get highest value (Covert) items in inventory
+- `GET /api/v1/steam/inventory/cs2/{identifier}` - Get CS2 inventory (default)
+- `GET /api/v1/steam/inventory/{appId}/{identifier}` - Get inventory for specific app
+
+### General API Endpoints
 - `GET /api/v1/test` - API Test
 - `GET /api/v1/docs` - Complete Documentation
 
-### Steam Market Endpoints
-- `GET /api/v1/steam/status` - API Status
-- `GET /api/v1/steam/apps` - Supported Steam Apps
-- `GET /api/v1/steam/find-app?name={app_name}` - Search app by name
-- `GET /api/v1/steam/app/{appId}` - Get app details
-- `GET /api/v1/steam/item/{itemName}` - Get item price
-- `GET /api/v1/steam/search?q={query}` - Search items
-- `GET /api/v1/steam/popular` - Popular items
-
-### Steam Profile Endpoints
-- `GET /api/v1/steam/profile/{identifier}` - Get Steam profile info
-- `GET /api/v1/steam/profile/{identifier}/inventory` - Get user inventory (CS2 default)
-- `GET /api/v1/steam/profile/{identifier}/friends` - Get friends list (requires API key)
-- `GET /api/v1/steam/profile/{identifier}/games/recent` - Get recently played games (requires API key)
-- `GET /api/v1/steam/profile/search` - Profile search (returns 501 - not supported by Steam)
-
-**Note**: `{identifier}` can be:
-- Steam64 ID (e.g., `76561198037867621`)
-- Vanity URL name (e.g., `StuntmanLT`)
-- Full profile URL (e.g., `https://steamcommunity.com/id/StuntmanLT/`)
+---
 
 ## 🔍 Examples
 [📖More examples📖](https://github.com/St0pfen/Steam-Market-REST-API-server/wiki/Examples)
 ### Search App by Name
 ```bash
-curl "http://localhost:8000/api/v1/steam/find-app?name=Counter-Strike"
-curl "http://localhost:8000/api/v1/steam/find-app?name=Dota"
+curl "http://localhost:8000/api/v1/steam/shop/find-app/Counter-Strike"
+curl "http://localhost:8000/api/v1/steam/shop/find-app/Dota"
 ```
 
 ### Get App Details
 ```bash
-curl "http://localhost:8000/api/v1/steam/app/730"
-curl "http://localhost:8000/api/v1/steam/app/570"
+curl "http://localhost:8000/api/v1/steam/shop/app/730"
+curl "http://localhost:8000/api/v1/steam/shop/app/570"
 ```
 
 ### Get Item Price
 ```bash
-curl "http://localhost:8000/api/v1/steam/item/AK-47%20|%20Redline%20(Field-Tested)"
+curl "http://localhost:8000/api/v1/steam/market/item/AK-47%20%7C%20Redline%20(Field-Tested)"
 ```
 
 ### Search Items
 ```bash
-curl "http://localhost:8000/api/v1/steam/search?q=AK-47&count=5&app_id=730"
+curl "http://localhost:8000/api/v1/steam/market/search/AK-47?count=5&app_id=730"
+```
+
+### Get Popular Items
+```bash
+curl "http://localhost:8000/api/v1/steam/market/popular"
 ```
 
 ### Steam Profile Examples
@@ -161,15 +168,15 @@ curl "http://localhost:8000/api/v1/steam/profile/76561198037867621"
 curl "http://localhost:8000/api/v1/steam/profile/StuntmanLT"
 curl "http://localhost:8000/api/v1/steam/profile/https://steamcommunity.com/id/StuntmanLT/"
 
-# Get inventory (CS2 by default, add ?appid=570 for Dota 2)
-curl "http://localhost:8000/api/v1/steam/profile/76561198037867621/inventory"
-curl "http://localhost:8000/api/v1/steam/profile/StuntmanLT/inventory?appid=570"
+# Get inventory (CS2 by default, add /{appId}/ for other apps)
+curl "http://localhost:8000/api/v1/steam/inventory/cs2/76561198037867621"
+curl "http://localhost:8000/api/v1/steam/inventory/570/76561198037867621"
 
 # Get friends list (requires STEAM_API_KEY)
-curl "http://localhost:8000/api/v1/steam/profile/76561198037867621/friends"
+curl "http://localhost:8000/api/v1/steam/profile/friends/76561198037867621"
 
 # Get recent games (requires STEAM_API_KEY)
-curl "http://localhost:8000/api/v1/steam/profile/76561198037867621/games/recent"
+curl "http://localhost:8000/api/v1/steam/profile/recent-games/76561198037867621"
 ```
 
 ## 📄 API Response Examples
@@ -301,5 +308,12 @@ curl "http://localhost:8000/api/v1/steam/profile/76561198037867621/games/recent"
   "timestamp": "2025-07-01 18:40:45"
 }
 ```
+
+## ⚡️ Project Modernization & Error Handling (2025)
+
+- All controllers and endpoints now use a centralized error handling pattern:
+  - Internal errors are only returned as HTTP 500 with `{ "success": false }` (no error details to the client).
+  - All error details (message, trace) are logged internally via LoggerService and error_log.
+- All JSON responses are now generated via a shared static helper: `App\Helpers\ResponseHelper::jsonResponse()`.
 
 
