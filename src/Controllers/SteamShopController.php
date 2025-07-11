@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Services\LoggerService;
 use App\Services\SteamShopService as SteamShopService;
+use App\Helpers\ResponseHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -12,19 +13,16 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * SteamShopController
  *
  * Handles endpoints related to searching for Steam apps by name.
+ * Provides functionality to find apps by name and retrieve detailed app information.
+ * 
+ * @package stopfen/steam-rest-api-php
+ * @author @St0pfen
+ * @version 1.0.0
  */
 class SteamShopController
 {
-    /**
-     * SteamShopService instance for handling shop-related operations
-     * @var SteamShopService
-     */
+    private ?LoggerService $logger = null;
     private SteamShopService $steamShopService;
-    /**
-     * Optional logger instance for request logging
-     * @var LoggerService|null
-     */
-    private ?LoggerService $logger;
 
     /**
      * Constructor
@@ -37,6 +35,18 @@ class SteamShopController
     {
         $this->logger = $logger ?? new LoggerService();
         $this->steamShopService = new SteamShopService($this->logger);
+    }
+
+    private function jsonError(Response $response, \Throwable $e): Response
+    {
+        if ($this->logger) {
+            $this->logger->error('Internal server error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+        error_log($e->getMessage() . "\n" . $e->getTraceAsString());
+        return ResponseHelper::jsonResponse($response, ['success' => false], 500);
     }
 
     /**
@@ -53,18 +63,16 @@ class SteamShopController
      */
     public function findAppByName(Request $request, Response $response, array $args): Response
     {
-        $appName = urldecode($args['app-name'] ?? '');
-
-        if (empty($appName)) {
-            $data = ['error' => 'App name is required', 'success' => false];
-            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        try {
+            $appName = urldecode($args['app-name'] ?? '');
+            if (empty($appName)) {
+                return ResponseHelper::jsonResponse($response, ['error' => 'App name is required', 'success' => false], 400);
+            }
+            $data = $this->steamShopService->findAppByName($appName);
+            return ResponseHelper::jsonResponse($response, $data);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
         }
-        
-        $data = $this->steamShopService->findAppByName($appName);
-        
-        $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
-        return $response->withHeader('Content-Type', 'application/json');
     }
 
     /**
@@ -82,23 +90,16 @@ class SteamShopController
      */
     public function getAppDetails(Request $request, Response $response, array $args): Response
     {
-        $appId = (int)($args['appId'] ?? 0);
-        
-        if ($appId <= 0) {
-            $data = [
-                'error' => 'Valid app ID is required',
-                'example' => '/api/v1/steam/app/730',
-                'success' => false,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-            $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        try {
+            $appId = (int)($args['appId'] ?? 0);
+            if ($appId <= 0) {
+                return ResponseHelper::jsonResponse($response, ['error' => 'Valid app ID is required', 'success' => false], 400);
+            }
+            $data = $this->steamShopService->getAppDetails($appId);
+            $statusCode = $data['success'] ? 200 : 404;
+            return ResponseHelper::jsonResponse($response, $data, $statusCode);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
         }
-        
-        $data = $this->steamShopService->getAppDetails($appId);
-        
-        $statusCode = $data['success'] ? 200 : 404;
-        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($statusCode);
     }
 }

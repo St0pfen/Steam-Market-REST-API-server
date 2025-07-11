@@ -7,7 +7,7 @@
  * Uses Slim Framework route groups for organization.
  *
  * @package stopfen/steam-rest-api-php
- * @author Stopfen
+ * @author @St0pfen
  * @version 1.0.0
  */
 

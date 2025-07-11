@@ -5,6 +5,7 @@ namespace App\Controllers;
 
 use App\Services\SteamSocialService;
 use App\Services\LoggerService;
+use App\Helpers\ResponseHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -16,69 +17,30 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * Integrates with Steam Web API through the SteamSocialService.
  *
  * @package stopfen/steam-rest-api-php
- * @author Stopfen
+ * @author @St0pfen
  * @version 1.0.0
  */
 class SteamSocialController
 {
-    /**
-     * Steam Profile service instance for API calls
-     * @var SteamSocialService
-     */
-    private SteamSocialService $socialService;
-    /**
-     * Optional logger instance for request logging
-     * @var LoggerService|null
-     */
     private ?LoggerService $logger = null;
+    private SteamSocialService $socialService;
 
-    /**
-     * Constructor
-     * 
-     * Instantiates the SteamSocialService internally.
-     * 
-     * @param LoggerService|null $logger Optional logger for debugging
-     */
     public function __construct(?LoggerService $logger = null)
     {
+        $this->logger = $logger ?? new LoggerService();
         $this->socialService = new SteamSocialService();
-        if ($logger) {
-            $this->logger = $logger;
+    }
+
+    private function jsonError(Response $response, \Throwable $e): Response
+    {
+        if ($this->logger) {
+            $this->logger->error('Internal server error', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString()
+            ]);
         }
-    }
-
-    /**
-     * Helper to write a JSON response with status code
-     */
-    private function jsonResponse(Response $response, array $data, int $status = 200): Response
-    {
-        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        return $response->withStatus($status)->withHeader('Content-Type', 'application/json');
-    }
-
-    /**
-     * Helper for error responses
-     */
-    private function errorResponse(Response $response, string $error, int $status = 400, array $extra = []): Response
-    {
-        $data = array_merge([
-            'error' => $error,
-            'success' => false,
-            'timestamp' => date('Y-m-d H:i:s')
-        ], $extra);
-        return $this->jsonResponse($response, $data, $status);
-    }
-
-    /**
-     * Helper for success responses
-     */
-    private function successResponse(Response $response, array $payload): Response
-    {
-        $data = array_merge($payload, [
-            'success' => true,
-            'timestamp' => date('Y-m-d H:i:s')
-        ]);
-        return $this->jsonResponse($response, $data);
+        error_log($e->getMessage() . "\n" . $e->getTraceAsString());
+        return ResponseHelper::jsonResponse($response, ['success' => false], 500);
     }
 
     /**
@@ -89,32 +51,19 @@ class SteamSocialController
         try {
             $identifier = $args['identifier'] ?? '';
             if (empty($identifier)) {
-                return $this->errorResponse($response, 'Steam ID or profile identifier is required');
+                return ResponseHelper::jsonResponse($response, ['error' => 'Steam ID or profile identifier is required', 'success' => false], 400);
             }
             $steamId = $this->socialService->resolveSteamId($identifier);
             if (!$steamId) {
-                return $this->errorResponse($response, 'Steam profile not found or invalid identifier', 404, ['identifier' => $identifier]);
+                return ResponseHelper::jsonResponse($response, ['error' => 'Steam profile not found or invalid identifier', 'success' => false], 404);
             }
             $profileData = $this->socialService->getProfile($steamId);
             if (!$profileData) {
-                return $this->errorResponse($response, 'Profile not found or private', 404, ['steamid' => $steamId]);
+                return ResponseHelper::jsonResponse($response, ['error' => 'Profile not found or private', 'success' => false], 404);
             }
-            if ($this->logger) {
-                $this->logger->info('Profile retrieved successfully', [
-                    'identifier' => $identifier,
-                    'steamid' => $steamId,
-                    'personaname' => $profileData['personaname'] ?? 'Unknown'
-                ]);
-            }
-            return $this->successResponse($response, ['profile' => $profileData]);
-        } catch (\Exception $e) {
-            if ($this->logger) {
-                $this->logger->error('Profile retrieval failed', [
-                    'identifier' => $args['identifier'] ?? 'unknown',
-                    'error' => $e->getMessage()
-                ]);
-            }
-            return $this->errorResponse($response, 'Internal server error while retrieving profile', 500);
+            return ResponseHelper::jsonResponse($response, ['profile' => $profileData, 'success' => true, 'timestamp' => date('Y-m-d H:i:s')]);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
         }
     }
 
@@ -126,32 +75,19 @@ class SteamSocialController
         try {
             $identifier = $args['identifier'] ?? '';
             if (empty($identifier)) {
-                return $this->errorResponse($response, 'Steam ID or profile identifier is required');
+                return ResponseHelper::jsonResponse($response, ['error' => 'Steam ID or profile identifier is required', 'success' => false], 400);
             }
             $steamId = $this->socialService->resolveSteamId($identifier);
             if (!$steamId) {
-                return $this->errorResponse($response, 'Steam profile not found', 404, ['identifier' => $identifier]);
+                return ResponseHelper::jsonResponse($response, ['error' => 'Steam profile not found', 'success' => false], 404);
             }
             $friendsData = $this->socialService->getFriendList($steamId);
             if (!$friendsData) {
-                return $this->errorResponse($response, 'Friend list not accessible (private profile or API key required)', 404, ['steamid' => $steamId]);
+                return ResponseHelper::jsonResponse($response, ['error' => 'Friend list not accessible (private profile or API key required)', 'success' => false], 404);
             }
-            if ($this->logger) {
-                $this->logger->info('Friend list retrieved successfully', [
-                    'identifier' => $identifier,
-                    'steamid' => $steamId,
-                    'friends_count' => $friendsData['friends_count'] ?? 0
-                ]);
-            }
-            return $this->successResponse($response, ['friends' => $friendsData]);
-        } catch (\Exception $e) {
-            if ($this->logger) {
-                $this->logger->error('Friend list retrieval failed', [
-                    'identifier' => $args['identifier'] ?? 'unknown',
-                    'error' => $e->getMessage()
-                ]);
-            }
-            return $this->errorResponse($response, 'Internal server error while retrieving friend list', 500);
+            return ResponseHelper::jsonResponse($response, ['friends' => $friendsData, 'success' => true, 'timestamp' => date('Y-m-d H:i:s')]);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
         }
     }
 
@@ -164,32 +100,19 @@ class SteamSocialController
             $identifier = $args['identifier'] ?? '';
             $count = min((int)($request->getQueryParams()['count'] ?? 10), 50);
             if (empty($identifier)) {
-                return $this->errorResponse($response, 'Steam ID or profile identifier is required');
+                return ResponseHelper::jsonResponse($response, ['error' => 'Steam ID or profile identifier is required', 'success' => false], 400);
             }
             $steamId = $this->socialService->resolveSteamId($identifier);
             if (!$steamId) {
-                return $this->errorResponse($response, 'Steam profile not found', 404, ['identifier' => $identifier]);
+                return ResponseHelper::jsonResponse($response, ['error' => 'Steam profile not found', 'success' => false], 404);
             }
             $gamesData = $this->socialService->getRecentlyPlayedGames($steamId, $count);
             if (!$gamesData) {
-                return $this->errorResponse($response, 'Recent games not accessible (API key required)', 404, ['steamid' => $steamId]);
+                return ResponseHelper::jsonResponse($response, ['error' => 'Recent games not accessible (API key required)', 'success' => false], 404);
             }
-            if ($this->logger) {
-                $this->logger->info('Recent games retrieved successfully', [
-                    'identifier' => $identifier,
-                    'steamid' => $steamId,
-                    'games_count' => count($gamesData['games'] ?? [])
-                ]);
-            }
-            return $this->successResponse($response, ['recent_games' => $gamesData]);
-        } catch (\Exception $e) {
-            if ($this->logger) {
-                $this->logger->error('Recent games retrieval failed', [
-                    'identifier' => $args['identifier'] ?? 'unknown',
-                    'error' => $e->getMessage()
-                ]);
-            }
-            return $this->errorResponse($response, 'Internal server error while retrieving recent games', 500);
+            return ResponseHelper::jsonResponse($response, ['recent_games' => $gamesData, 'success' => true, 'timestamp' => date('Y-m-d H:i:s')]);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
         }
     }
 }

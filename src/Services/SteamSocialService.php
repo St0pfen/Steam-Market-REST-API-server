@@ -19,7 +19,7 @@ use App\Helpers\SteamWebApiHelper;
  * Uses Steam Web API and community data endpoints.
  *
  * @package stopfen/steam-rest-api-php
- * @author Stopfen
+ * @author @St0pfen
  * @version 1.0.0
  */
 class SteamSocialService

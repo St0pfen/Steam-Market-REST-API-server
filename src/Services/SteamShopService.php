@@ -10,6 +10,12 @@ use SteamApi\SteamApi;
  *
  * Provides services related to Steam shop functionalities such as
  * searching for apps, retrieving app details, and more.
+ * * This service interacts with the Steam Store API to fetch application
+ * information based on user queries.
+ * 
+ * @package stopfen/steam-rest-api-php
+ * @author @St0pfen
+ * @version 1.0.0
  */
 class SteamShopService
 {

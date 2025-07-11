@@ -4,6 +4,7 @@ declare(strict_types=1);
 namespace App\Controllers;
 use App\Services\SteamMarketService;
 use App\Services\LoggerService;
+use App\Helpers\ResponseHelper;
 use Psr\Http\Message\ResponseInterface as Response;
 use Psr\Http\Message\ServerRequestInterface as Request;
 
@@ -11,30 +12,32 @@ use Psr\Http\Message\ServerRequestInterface as Request;
  * Steam Market Controller
  *
  * Handles endpoints related to retrieving item prices from the Steam Market.
+ * Provides functionality to get item prices, search for items, and retrieve popular items.
+ * 
+ * @package stopfen/steam-rest-api-php
+ * @author @St0pfen
+ * @version 1.0.0
  */
 class SteamMarketController
 {
-    /**
-     * Logger service instance for logging
-     * @var LoggerService
-     */
-    private LoggerService $logger;
+    private ?LoggerService $logger = null;
+    private SteamMarketService $steamMarketService;
 
-    /**
-     * Steam Market service instance for API calls
-     * @var SteamMarketService
-     */
-    private SteamMarketService $steamMarketService;  
-
-    /**
-     * SteamMarketController constructor
-     *
-     * Instantiates the SteamMarketService and LoggerService internally.
-     */
     public function __construct(?LoggerService $logger = null)
     {
         $this->logger = $logger ?? new LoggerService();
         $this->steamMarketService = new SteamMarketService($this->logger);
+    }
+
+    private function jsonError(Response $response, \Throwable $e): Response
+    {
+        if ($this->logger) {
+            $this->logger->error('Internal Server Error: ' . $e->getMessage(), [
+                'trace' => $e->getTraceAsString()
+            ]);
+        }
+        error_log($e->getMessage() . "\n" . $e->getTraceAsString());
+        return ResponseHelper::jsonResponse($response, ['success' => false], 500);
     }
 
     /**
@@ -52,23 +55,17 @@ class SteamMarketController
      */
     public function getItemPrice(Request $request, Response $response, array $args): Response
     {
-        // URL-Decoding for path parameters
-        $itemName = urldecode($args['itemName'] ?? '');
-        
-        $queryParams = $request->getQueryParams();
-        $appId = (int)($queryParams['app_id'] ?? 730);
-        
-        if (empty($itemName)) {
-            $data = ['error' => 'Item name is required', 'success' => false];
-            $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        try {
+            $itemName = urldecode($args['itemName'] ?? '');
+            $appId = (int)($request->getQueryParams()['app_id'] ?? 730);
+            if (empty($itemName)) {
+                return ResponseHelper::jsonResponse($response, ['error' => 'Item name is required', 'success' => false], 400);
+            }
+            $data = $this->steamMarketService->getItemPrice($itemName, $appId);
+            return ResponseHelper::jsonResponse($response, $data);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
         }
-        
-        // itemName is now correctly decoded
-        $data = $this->steamMarketService->getItemPrice($itemName, $appId);
-
-        $response->getBody()->write(json_encode($data, JSON_UNESCAPED_SLASHES));
-        return $response->withHeader('Content-Type', 'application/json');
     }
 
     /**
@@ -85,29 +82,21 @@ class SteamMarketController
      */
     public function searchItems(Request $request, Response $response, array $args): Response
     {
-        $queryParams = $request->getQueryParams();
-        $itemName = urldecode($args['itemName'] ?? '');
-        $appId = (int)($queryParams['app_id'] ?? 730);
-        $count = min((int)($queryParams['count'] ?? 10), 50); // Max 50 items
-
-        if (empty($itemName)) {
-            $data = [
-                'error' => 'Search query parameter "itemName" is required',
-                'example' => '/api/v1/steam/search?itemName=AK-47&app_id=730&count=10',
-                'success' => false,
-                'timestamp' => date('Y-m-d H:i:s')
-            ];
-            $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-            return $response->withHeader('Content-Type', 'application/json')->withStatus(400);
+        try {
+            $itemName = urldecode($args['itemName'] ?? '');
+            $appId = (int)($request->getQueryParams()['app_id'] ?? 730);
+            $count = min((int)($request->getQueryParams()['count'] ?? 10), 50);
+            if (empty($itemName)) {
+                return ResponseHelper::jsonResponse($response, ['error' => 'Search query parameter "itemName" is required', 'success' => false], 400);
+            }
+            $data = $this->steamMarketService->searchItems($itemName, $appId, $count);
+            $statusCode = $data['success'] ? 200 : 500;
+            return ResponseHelper::jsonResponse($response, $data, $statusCode);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
         }
-
-        $data = $this->steamMarketService->searchItems($itemName, $appId, $count);
-
-        $statusCode = $data['success'] ? 200 : 500;
-        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($statusCode);
     }
-    
+
     /**
      * Get popular Steam Market items
      * 
@@ -122,13 +111,13 @@ class SteamMarketController
      */
     public function getPopularItems(Request $request, Response $response): Response
     {
-        $queryParams = $request->getQueryParams();
-        $appId = (int)($queryParams['app_id'] ?? 730);
-
-        $data = $this->steamMarketService->getPopularItems($appId);
-
-        $statusCode = $data['success'] ? 200 : 500;
-        $response->getBody()->write(json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES));
-        return $response->withHeader('Content-Type', 'application/json')->withStatus($statusCode);
+        try {
+            $appId = (int)($request->getQueryParams()['app_id'] ?? 730);
+            $data = $this->steamMarketService->getPopularItems($appId);
+            $statusCode = $data['success'] ? 200 : 500;
+            return ResponseHelper::jsonResponse($response, $data, $statusCode);
+        } catch (\Throwable $e) {
+            return $this->jsonError($response, $e);
+        }
     }
 }

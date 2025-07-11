@@ -16,7 +16,7 @@ use App\Services\LoggerService;
  * Handles API authentication and error management.
  *
  * @package stopfen/steam-rest-api-php
- * @author Stopfen
+ * @author @St0pfen
  * @version 1.0.0
  */
 class SteamMarketService
