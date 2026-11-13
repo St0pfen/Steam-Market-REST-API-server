@@ -2,7 +2,7 @@
     "name": "stopfmich/steam-api-php",
     "description": "Professional PHP REST API for Steam Market and Profile data",
     "type": "project",
-    "license": "CC-BY-NC-SA-4.0",
+    "license": "MIT",
     "authors": [
         {
             "name": "Stopfen",

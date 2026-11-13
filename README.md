@@ -62,9 +62,12 @@ NETWORK_TESTS=1 docker run --rm -e XDEBUG_MODE=off -e NETWORK_TESTS=1 -e TEST_BA
 `tests/bootstrap.php` starts a PHP development server unless `TEST_BASE_URL` is set.
 
 ## 📄 License
-This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
+MIT — see [LICENSE](LICENSE). You may use, modify and redistribute this code,
+including commercially, provided the copyright notice and permission notice stay
+with it.
 
-[![Creative Commons License](https://i.creativecommons.org/l/by-nc-sa/4.0/88x31.png)](http://creativecommons.org/licenses/by-nc-sa/4.0/)
+> Relicensed from CC BY-NC-SA 4.0 on 2026-11-13. Copies obtained under the old
+> terms remain under those terms; this applies to the current and future versions.
 
 ---
 
