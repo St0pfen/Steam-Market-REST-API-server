@@ -1,166 +1,157 @@
 <?php
 /**
  * Steam API Integration Tests
- * 
- * PHPUnit test suite for testing Steam Market REST API endpoints
- * including basic functionality, error handling, and response validation.
+ *
+ * Prüft die realen HTTP-Endpunkte der API gegen einen laufenden Server.
+ * Der Server wird von tests/bootstrap.php gestartet (php -S) oder über
+ * TEST_BASE_URL als externer Dienst (z. B. Docker-Container) vorgegeben.
  *
  * @package stopfen/steam-rest-api-php
  * @author Stopfen
- * @version 1.0.0
+ * @version 2.0.0
  */
 
 declare(strict_types=1);
 
 namespace Tests;
 
-use PHPUnit\Framework\TestCase;
 use GuzzleHttp\Client;
-use GuzzleHttp\Exception\RequestException;
+use GuzzleHttp\Exception\GuzzleException;
+use PHPUnit\Framework\Attributes\Group;
+use PHPUnit\Framework\TestCase;
 
-/**
- * Steam API Test Class
- * 
- * Contains integration tests for all Steam Market API endpoints
- * to ensure proper functionality and response formatting.
- */
 class SteamApiTest extends TestCase
 {
-    /**
-     * HTTP client for making API requests
-     * @var Client
-     */
     private Client $client;
-    
-    /**
-     * Base URL for API testing
-     * @var string
-     */
-    private string $baseUrl = 'http://localhost:8000';
-    
-    /**
-     * Set up test environment
-     * 
-     * Initializes the HTTP client with base configuration
-     * for testing API endpoints.
-     *
-     * @return void
-     */
+
     protected function setUp(): void
     {
-        $this->client = new Client(['base_uri' => $this->baseUrl]);
+        $baseUrl = getenv('TEST_BASE_URL') ?: 'http://127.0.0.1:8000';
+        $this->client = new Client([
+            'base_uri' => rtrim($baseUrl, '/'),
+            'http_errors' => false,
+            'timeout' => 15,
+        ]);
     }
-    
+
     /**
-     * Test API status endpoint
-     * 
-     * Verifies that the basic API test endpoint returns correct
-     * status code and expected response structure.
-     *
-     * @return void
+     * @return array<string, mixed>
      */
+    private function json(string $path): array
+    {
+        $response = $this->client->get($path);
+        $raw = (string)$response->getBody();
+
+        $data = json_decode($raw, true);
+        $this->assertIsArray($data, "Antwort von {$path} ist kein JSON: {$raw}");
+
+        return $data;
+    }
+
     public function testApiStatus(): void
     {
         $response = $this->client->get('/api/v1/test');
-        $this->assertEquals(200, $response->getStatusCode());
-        
-        $data = json_decode($response->getBody()->getContents(), true);
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertTrue($data['success']);
-        $this->assertArrayHasKey('message', $data);
+        $this->assertStringContainsString('is working!', $data['message']);
+        $this->assertArrayHasKey('version', $data);
+        $this->assertArrayHasKey('timestamp', $data);
+        $this->assertArrayHasKey('Steam API', $data['endpoints']);
     }
-    
-    /**
-     * Test Steam apps endpoint
-     * 
-     * Verifies that the Steam apps endpoint returns the list of
-     * supported applications with proper structure.
-     *
-     * @return void
-     */
+
+    public function testDocsEndpoint(): void
+    {
+        $response = $this->client->get('/api/v1/docs');
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertTrue($data['success']);
+        $this->assertArrayHasKey('title', $data);
+        $this->assertArrayHasKey('endpoints', $data);
+        $this->assertArrayHasKey('steam', $data['endpoints']);
+        $this->assertArrayHasKey(
+            'GET /api/v1/steam/market/search/{itemName}',
+            $data['endpoints']['steam']
+        );
+    }
+
     public function testSteamAppsEndpoint(): void
     {
-        $response = $this->client->get('/api/v1/steam/apps');
-        $this->assertEquals(200, $response->getStatusCode());
-        
-        $data = json_decode($response->getBody()->getContents(), true);
+        $response = $this->client->get('/api/v1/steam/shop/apps');
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertTrue($data['success']);
         $this->assertArrayHasKey('apps', $data);
-        $this->assertArrayHasKey(730, $data['apps']); // CS:GO
+        $this->assertSame(730, $data['default_app']);
+        $this->assertSame('Counter-Strike 2', $data['apps']['730']['name']);
+        $this->assertTrue($data['apps']['730']['has_market']);
     }
-    
-    /**
-     * Test Steam status endpoint
-     * 
-     * Verifies that the Steam API status endpoint returns proper
-     * status information and health check data.
-     *
-     * @return void
-     */
+
     public function testSteamStatusEndpoint(): void
     {
-        $response = $this->client->get('/api/v1/steam/status');
-        $this->assertEquals(200, $response->getStatusCode());
-        
-        $data = json_decode($response->getBody()->getContents(), true);
+        $response = $this->client->get('/api/v1/steam/shop/status');
+        $this->assertSame(200, $response->getStatusCode());
+
+        $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertTrue($data['success']);
-        $this->assertEquals('online', $data['status']);
+        $this->assertSame('online', $data['status']);
+        $this->assertArrayHasKey('service', $data);
     }
-    
-    /**
-     * Test search items with valid query
-     * 
-     * Tests the search functionality with a valid query parameter
-     * and handles both success and error cases gracefully.
-     *
-     * @return void
-     */
-    public function testSearchItemsWithValidQuery(): void
-    {
-        $response = $this->client->get('/api/v1/steam/search?q=AK-47&count=1');
-        $data = json_decode($response->getBody()->getContents(), true);
-        
-        $this->assertArrayHasKey('success', $data);
-        if ($data['success']) {
-            $this->assertArrayHasKey('items', $data);
-        } else {
-            // Steam API could be offline or rate-limiting
-            $this->assertArrayHasKey('error', $data);
-        }
-    }
-    
-    /**
-     * Test search items without required query parameter
-     * 
-     * Verifies that the search endpoint properly validates required
-     * parameters and returns appropriate error responses.
-     *
-     * @return void
-     */
-    public function testSearchItemsWithoutQuery(): void
-    {
-        $response = $this->client->get('/api/v1/steam/search');
-        $this->assertEquals(400, $response->getStatusCode());
-        
-        $data = json_decode($response->getBody()->getContents(), true);
-        $this->assertFalse($data['success']);
-        $this->assertArrayHasKey('error', $data);
-    }
-    
-    /**
-     * Test 404 error handling for non-existent endpoints
-     * 
-     * Verifies that the API properly handles requests to non-existent
-     * endpoints with appropriate 404 responses.
-     *
-     * @return void
-     */
+
     public function testNotFoundEndpoint(): void
     {
         $response = $this->client->get('/api/v1/nonexistent');
-        $this->assertEquals(404, $response->getStatusCode());
-        
-        $data = json_decode($response->getBody()->getContents(), true);
+        $this->assertSame(404, $response->getStatusCode());
+
+        $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
         $this->assertFalse($data['success']);
-        $this->assertArrayHasKey('error', $data);
+        $this->assertSame('Endpoint not found', $data['error']);
+        $this->assertArrayHasKey('available_endpoints', $data);
+    }
+
+    public function testCorsPreflightHeaders(): void
+    {
+        $response = $this->client->request('OPTIONS', '/api/v1/test', [
+            'headers' => [
+                'Origin' => 'https://example.com',
+                'Access-Control-Request-Method' => 'GET',
+            ],
+        ]);
+
+        $this->assertContains($response->getStatusCode(), [200, 204]);
+        $this->assertNotEmpty($response->getHeaderLine('Access-Control-Allow-Origin'));
+    }
+
+    /**
+     * Netzwerk-Test: spricht die echte Steam-API an. Nur mit NETWORK_TESTS=1.
+     */
+    #[Group('network')]
+    public function testMarketSearchAgainstSteam(): void
+    {
+        if (getenv('NETWORK_TESTS') !== '1') {
+            $this->markTestSkipped('NETWORK_TESTS=1 nicht gesetzt');
+        }
+
+        try {
+            $response = $this->client->get('/api/v1/steam/market/search/AK-47', [
+                'query' => ['app_id' => 730, 'count' => 1],
+            ]);
+        } catch (GuzzleException $e) {
+            $this->fail('Request fehlgeschlagen: ' . $e->getMessage());
+        }
+
+        $data = json_decode((string)$response->getBody(), true, 512, JSON_THROW_ON_ERROR);
+        $this->assertArrayHasKey('success', $data);
+
+        if ($data['success'] === true) {
+            $this->assertContains($response->getStatusCode(), [200]);
+            $this->assertArrayHasKey('items', $data);
+        } else {
+            // Steam kann rate-limiten oder offline sein — Fehlerform muss stimmen
+            $this->assertArrayHasKey('error', $data);
+        }
     }
 }

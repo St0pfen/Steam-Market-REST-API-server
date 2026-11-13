@@ -40,6 +40,27 @@ We all have to start somewhere...
 - **php-di/php-di** - MIT License
 - **phpunit/phpunit** (dev) - BSD-3-Clause License
 
+## 🧪 Tests
+
+Integration tests run against the real HTTP API (PHPUnit 12 + Guzzle).
+
+```bash
+# Inside the development image — starts php -S on 127.0.0.1:8000 automatically
+docker build --target development -t steam-api:dev .
+docker run --rm -e XDEBUG_MODE=off steam-api:dev composer test
+
+# Against an already running instance (e.g. the production container)
+docker run --rm -e TEST_BASE_URL=http://127.0.0.1:18080 \
+  -v "$PWD/tests:/var/www/html/tests:ro" -v "$PWD/phpunit.xml:/var/www/html/phpunit.xml:ro" \
+  steam-api:dev composer test
+
+# Network tests hit the real Steam API (skipped by default)
+NETWORK_TESTS=1 docker run --rm -e XDEBUG_MODE=off -e NETWORK_TESTS=1 -e TEST_BASE_URL=http://127.0.0.1:18080 \
+  --network container:steam-api-prod steam-api:dev composer test:network
+```
+
+`tests/bootstrap.php` starts a PHP development server unless `TEST_BASE_URL` is set.
+
 ## 📄 License
 This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License](http://creativecommons.org/licenses/by-nc-sa/4.0/).
 
