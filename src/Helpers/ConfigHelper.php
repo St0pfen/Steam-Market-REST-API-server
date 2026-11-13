@@ -71,7 +71,7 @@ class ConfigHelper
      * @param string|null $key Specific CORS configuration key to retrieve, or null for all settings
      * @return mixed Single CORS configuration value if key specified, or array of all CORS settings
      */
-    public static function cors(string $key = null)
+    public static function cors(?string $key = null)
     {
         $config = [
             'allow_origin' => self::env('CORS_ALLOW_ORIGIN', '*'),
