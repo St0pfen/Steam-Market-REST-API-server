@@ -53,7 +53,7 @@ This work is licensed under a [Creative Commons Attribution-NonCommercial-ShareA
 # 🔎 A quick starter guide and some examples
 ## 📋 Prerequisites
 
-- PHP 7.4+ or 8.0+
+- PHP 8.5+ (Docker-Image: `php:8.5-apache`)
 - Composer
 
 ## 🛠️ Installation

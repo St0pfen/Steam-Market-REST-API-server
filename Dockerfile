@@ -1,5 +1,5 @@
 # Multi-stage build for production optimization
-FROM php:8.3-apache as base
+FROM php:8.5-apache AS base
 
 # Install system dependencies
 RUN apt-get update && apt-get install -y \
@@ -56,7 +56,7 @@ HEALTHCHECK --interval=30s --timeout=3s --start-period=30s --retries=3 \
 EXPOSE 80
 
 # Production stage
-FROM base as production
+FROM base AS production
 
 # Remove development files
 RUN rm -rf tests/ docker/ .git/ .github/ \
@@ -66,7 +66,7 @@ RUN rm -rf tests/ docker/ .git/ .github/ \
 CMD ["apache2-foreground"]
 
 # Development stage
-FROM base as development
+FROM base AS development
 
 # Install development dependencies
 RUN composer install --optimize-autoloader
