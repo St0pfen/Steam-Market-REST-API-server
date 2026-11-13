@@ -9,9 +9,7 @@ docker-compose.yml
 .env.production
 
 # Development files
-tests/
 .phpunit.result.cache
-phpunit.xml
 composer.lock
 examples/
 .github/instructions/

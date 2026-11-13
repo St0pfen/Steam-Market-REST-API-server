@@ -44,7 +44,6 @@ Thumbs.db
 
 # PHPUnit
 .phpunit.result.cache
-/phpunit.xml
 /coverage/
 
 # Development tools

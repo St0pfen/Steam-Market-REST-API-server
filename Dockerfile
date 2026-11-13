@@ -15,6 +15,9 @@ RUN apt-get update && apt-get install -y \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+# PHP-Konfiguration: Fehler ins Log, nie in den Response-Body
+COPY docker/php.ini /usr/local/etc/php/conf.d/zz-app.ini
+
 # Install Composer
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 
@@ -70,6 +73,9 @@ FROM base AS development
 
 # Install development dependencies
 RUN composer install --optimize-autoloader
+
+# Fehler in der Entwicklung sichtbar machen
+COPY docker/php-dev.ini /usr/local/etc/php/conf.d/zz-dev.ini
 
 # Install Xdebug for development
 RUN pecl install xdebug && docker-php-ext-enable xdebug

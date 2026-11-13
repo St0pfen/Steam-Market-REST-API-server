@@ -18,6 +18,7 @@
         "allyans3/steam-market-api-v2": "^4.3"
     },
     "require-dev": {
+        "guzzlehttp/guzzle": "^7.10",
         "phpunit/phpunit": "^12.2.5"
     },
     "autoload": {
@@ -27,6 +28,7 @@
     },
     "scripts": {
         "test": "phpunit",
+        "test:network": "NETWORK_TESTS=1 phpunit --group network",
         "post-install-cmd": [
             "@php -r \"if (!file_exists('.env') && file_exists('.env.example')) copy('.env.example', '.env');\""
         ]
