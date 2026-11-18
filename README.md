@@ -107,6 +107,11 @@ Create a `.env` file in the root directory with the following variables:
 # Steam API Configuration
 STEAM_API_KEY=your_steam_api_key_here
 
+# Outgoing HTTP behaviour for upstream Steam calls (optional)
+# Timeout in seconds (default 15), user agent sent with every request
+STEAM_HTTP_TIMEOUT=15
+STEAM_HTTP_USER_AGENT="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
+
 # Application Configuration
 APP_NAME="Steam REST API"
 APP_VERSION="1.0.0"
