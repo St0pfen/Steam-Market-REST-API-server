@@ -1,9 +1,9 @@
 <?php
 /**
- * Unit Tests for SteamWebApiHelper
+ * Unit tests for SteamWebApiHelper
  *
- * Deckt die reine URL-Erzeugung sowie die Konfigurationsauflösung von
- * Timeout und User-Agent ab — ohne ausgehende Netzwerkaufrufe.
+ * Covers pure URL construction, timeout/user-agent configuration resolution
+ * and HTTP status handling — without touching the real Steam API.
  *
  * @package stopfen/steam-rest-api-php
  * @author Stopfen
@@ -124,5 +124,48 @@ class SteamWebApiHelperTest extends TestCase
         $helper = new SteamWebApiHelper();
 
         $this->assertSame(SteamWebApiHelper::DEFAULT_TIMEOUT, $helper->getTimeout());
+    }
+
+    public function testStatusCodeIsParsedFromStatusLine(): void
+    {
+        $this->assertSame(
+            200,
+            SteamWebApiHelper::statusCodeFromHeaders(['HTTP/1.1 200 OK', 'Content-Type: application/json'])
+        );
+    }
+
+    public function testStatusCodeUsesFinalHeaderBlockAfterRedirects(): void
+    {
+        $headers = [
+            'HTTP/1.1 302 Found',
+            'Location: https://api.steampowered.com/final',
+            'HTTP/2 200',
+            'Content-Type: application/json',
+        ];
+
+        $this->assertSame(200, SteamWebApiHelper::statusCodeFromHeaders($headers));
+    }
+
+    public function testStatusCodeIsNullWithoutStatusLine(): void
+    {
+        $this->assertNull(SteamWebApiHelper::statusCodeFromHeaders([]));
+        $this->assertNull(SteamWebApiHelper::statusCodeFromHeaders(['Content-Type: text/plain']));
+    }
+
+    public function testApiCallReturnsNullWhenConnectionFails(): void
+    {
+        $helper = new SteamWebApiHelper(null, 1);
+
+        $this->assertNull($helper->makeApiCall('http://127.0.0.1:1/never-listening'));
+    }
+
+    public function testApiCallStillParsesNonHttpResponses(): void
+    {
+        $helper = new SteamWebApiHelper();
+
+        $payload = ['players' => [['steamid' => '76561198000000000']]];
+        $url = 'data://application/json,' . rawurlencode((string) json_encode($payload));
+
+        $this->assertSame($payload, $helper->makeApiCall($url));
     }
 }
