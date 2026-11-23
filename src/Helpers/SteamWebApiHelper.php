@@ -100,6 +100,31 @@ class SteamWebApiHelper
     }
 
     /**
+     * Extract the HTTP status code from a stream wrapper response header block.
+     *
+     * `file_get_contents()` fills `$http_response_header` with every header
+     * block of the request, including intermediate redirects. The final
+     * block describes the response that actually carried the body, so the
+     * last "HTTP/..." status line is the one that matters.
+     *
+     * @param array<int, string> $headers Raw header lines
+     * @return int|null Status code, or null when no status line is present
+     */
+    public static function statusCodeFromHeaders(array $headers): ?int
+    {
+        $status = null;
+
+        foreach ($headers as $header) {
+            if (!is_string($header) || !preg_match('#^HTTP/\S+\s+(\d{3})#i', $header, $matches)) {
+                continue;
+            }
+            $status = (int) $matches[1];
+        }
+
+        return $status;
+    }
+
+    /**
      * Configured request timeout in seconds.
      */
     public function getTimeout(): int
@@ -117,6 +142,9 @@ class SteamWebApiHelper
 
     /**
      * Make API call to Steam endpoints
+     *
+     * Returns null for transport failures and for HTTP error responses
+     * (status >= 400), so callers never mistake an error page for payload.
      * 
      * @param string $url URL to call
      * @param array $params Query parameters
@@ -147,13 +175,34 @@ class SteamWebApiHelper
                     'expect_json' => $isJsonResponse
                 ]);
             }
-            $response = file_get_contents($fullUrl, false, $context);
-            
+            // Warnings are suppressed on purpose: a transport failure is a
+            // handled outcome here, and the reason is captured via
+            // error_get_last() below and logged with context.
+            $response = @file_get_contents($fullUrl, false, $context);
+            $headers = $http_response_header ?? [];
+
             if ($response === false) {
+                $lastError = error_get_last();
+
                 if ($this->logger) {
                     $this->logger->warning('API call returned false', [
                         'url' => $fullUrl,
-                        'http_response_header' => $http_response_header ?? null
+                        'error' => $lastError['message'] ?? null,
+                        'status' => self::statusCodeFromHeaders($headers),
+                        'http_response_header' => $headers !== [] ? $headers : null
+                    ]);
+                }
+                return null;
+            }
+
+            $status = self::statusCodeFromHeaders($headers);
+
+            if ($status !== null && $status >= 400) {
+                if ($this->logger) {
+                    $this->logger->warning('API call returned an error status', [
+                        'url' => $fullUrl,
+                        'status' => $status,
+                        'response_preview' => substr((string) $response, 0, 200)
                     ]);
                 }
                 return null;
