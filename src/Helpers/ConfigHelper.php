@@ -17,9 +17,14 @@ class ConfigHelper
 {
     /**
      * Get environment variable with fallback value
-     * 
-     * Retrieves environment variables with proper type conversion for boolean values.
-     * Falls back to default value if the environment variable is not set.
+     *
+     * Retrieves environment variables with proper type conversion for boolean
+     * values. Falls back to the default when the variable is missing or blank.
+     *
+     * Note: getenv() returns `false` for unset variables, not null, so the
+     * lookup is normalised before the default is applied — otherwise the
+     * fallback could never trigger and callers received `false` instead of
+     * their default value.
      *
      * @param string $key The environment variable key to retrieve
      * @param mixed $default Default value to return if the environment variable is not set
@@ -27,8 +32,17 @@ class ConfigHelper
      */
     public static function env(string $key, $default = null)
     {
-        $value = $_ENV[$key] ?? getenv($key) ?? $default;
-        
+        $value = $_ENV[$key] ?? null;
+
+        if ($value === null) {
+            $fetched = getenv($key);
+            $value = $fetched === false ? null : $fetched;
+        }
+
+        if ($value === null || $value === '') {
+            return $default;
+        }
+
         // Handle boolean strings
         if (is_string($value)) {
             $lower = strtolower($value);
